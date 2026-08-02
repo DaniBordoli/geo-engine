@@ -43,6 +43,20 @@
       "when": 1785698651144,
       "tag": "0005_great_felicia_hardy",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785708998680,
+      "tag": "0006_uneven_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785709620917,
+      "tag": "0007_gray_spiral",
+      "breakpoints": true
     }
   ]
 }

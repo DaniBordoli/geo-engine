@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveScanIdByOrder } from "@/app/fixpack-actions";
+import { analytics } from "@/lib/analytics/client";
 
 // Cuánto reintentamos que el webhook order_created persista el order id antes de
 // rendirnos. ~30s cubre de sobra el lag entre el redirect y el webhook.
@@ -13,6 +14,11 @@ export function ResolveView({ order }: { order: string }) {
   const router = useRouter();
   const [gaveUp, setGaveUp] = useState(false);
   const polls = useRef(0);
+
+  // Se llega acá sólo por el redirect post-pago de Lemon → buen proxy de "Paid".
+  useEffect(() => {
+    analytics("Paid");
+  }, []);
 
   useEffect(() => {
     let active = true;

@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getFixPackState, type FixPackState } from "./fixpack-actions";
+import { getFixPackState, trackCheckoutClick, type FixPackState } from "./fixpack-actions";
 import type { ScanReport } from "@/lib/scan";
 import type { FixItem, FixPack } from "@/lib/fixpack/types";
 import { fixPackToMarkdown } from "@/lib/fixpack/markdown";
+import { analytics } from "@/lib/analytics/client";
 
 const LABEL: Record<FixItem["category"], string> = {
   "citable-content": "Contenido citable",
@@ -155,7 +156,11 @@ export function FixPackSection({ report, email }: { report: ScanReport; email: s
             <button
               onClick={() => {
                 // Síncrono dentro del gesto (P1.1): no lo bloquea el popup blocker.
-                if (state?.status === "locked") window.open(state.checkoutUrl, "_blank");
+                if (state?.status === "locked") {
+                  analytics("CheckoutClick");
+                  void trackCheckoutClick(scanId);
+                  window.open(state.checkoutUrl, "_blank");
+                }
               }}
               disabled={state?.status !== "locked"}
               className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white disabled:opacity-60"

@@ -16,13 +16,26 @@ export type PersistScanArgs = {
   competitors: string[];
   /** Resumen de score (0–1) para la tendencia del dashboard. */
   score: { shareOfVoice: number; citationRate: number; invisibleRate: number };
+  /** Snapshot del reporte para el público /r/[token] (ver ReportSnapshot). */
+  reportSnapshot: unknown;
+  /** Atribución de origen (UTM + referrer), para unir conversión→fuente. */
+  attribution?: {
+    source?: string | null;
+    medium?: string | null;
+    campaign?: string | null;
+    referrer?: string | null;
+  };
   prompts: PersistPrompt[];
 };
 
-export type PersistResult = { scanId: string; dashboardToken: string };
+export type PersistResult = {
+  scanId: string;
+  dashboardToken: string;
+  reportToken: string;
+};
 
-// Escribe un scan completo en Neon: upsert de user (lead), scan (con score),
-// prompts y results. Devuelve el id del scan y el token de dashboard del user.
+// Escribe un scan completo en Neon: upsert de user (lead), scan (con score +
+// snapshot), prompts y results. Devuelve ids/tokens.
 export async function persistScan(args: PersistScanArgs): Promise<PersistResult> {
   // Lead: upsert por email (email es UNIQUE).
   const [user] = await db
@@ -42,10 +55,19 @@ export async function persistScan(args: PersistScanArgs): Promise<PersistResult>
       shareOfVoice: args.score.shareOfVoice,
       citationRate: args.score.citationRate,
       invisibleRate: args.score.invisibleRate,
+      reportSnapshot: args.reportSnapshot,
+      source: args.attribution?.source ?? null,
+      medium: args.attribution?.medium ?? null,
+      campaign: args.attribution?.campaign ?? null,
+      referrer: args.attribution?.referrer ?? null,
     })
-    .returning({ id: scans.id });
+    .returning({ id: scans.id, reportToken: scans.reportToken });
 
-  const out: PersistResult = { scanId: scan.id, dashboardToken: user.dashboardToken };
+  const out: PersistResult = {
+    scanId: scan.id,
+    dashboardToken: user.dashboardToken,
+    reportToken: scan.reportToken,
+  };
   if (args.prompts.length === 0) return out;
 
   // Prompts en batch; Postgres devuelve los ids en orden de inserción.

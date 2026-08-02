@@ -14,10 +14,18 @@ import { ecommerce } from "@/lib/verticals/ecommerce";
 const MAX_PROMPTS = Number(process.env.SCAN_MAX_PROMPTS ?? 15);
 const ENGINE_CONCURRENCY = 5;
 
+export type Attribution = {
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  referrer?: string | null;
+};
+
 export type ScanInput = {
   domain: string;
   email?: string;
   verticalId?: string;
+  attribution?: Attribution;
 };
 
 export type LostPrompt = { prompt: string; engine: string };
@@ -39,6 +47,8 @@ export type ScanReport = {
   scanId?: string;
   /** Token del usuario para el link al dashboard (si se persistió). */
   dashboardToken?: string;
+  /** Token del reporte público compartible /r/[token] (si se persistió). */
+  reportToken?: string;
 };
 
 // Deriva el token de marca desde el dominio: "https://www.nike.com/x" → "nike".
@@ -106,6 +116,7 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
   // Un fallo al persistir no debe tumbar el reporte (el reporte es el producto).
   let scanId: string | undefined;
   let dashboardToken: string | undefined;
+  let reportToken: string | undefined;
   if (process.env.DATABASE_URL && input.email) {
     try {
       const { persistScan } = await import("@/lib/persist");
@@ -119,6 +130,15 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
           citationRate: score.citationRate,
           invisibleRate: score.invisibleRate,
         },
+        reportSnapshot: {
+          mock,
+          promptCount: prompts.length,
+          engineIds: engines.map((e) => e.id),
+          score,
+          lostPrompts,
+          failedJobs,
+        },
+        attribution: input.attribution,
         prompts: prompts.map((p, pi) => ({
           text: p.text,
           archetype: p.archetype,
@@ -129,6 +149,7 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
       });
       scanId = persisted.scanId;
       dashboardToken = persisted.dashboardToken;
+      reportToken = persisted.reportToken;
     } catch (err) {
       console.error("persistencia falló (el reporte sigue)", err);
     }
@@ -146,5 +167,6 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
     failedJobs,
     scanId,
     dashboardToken,
+    reportToken,
   };
 }

@@ -30,6 +30,14 @@ export const sentimentEnum = pgEnum("sentiment", [
   "negative",
 ]);
 
+export const eventTypeEnum = pgEnum("event_type", [
+  "scan_started",
+  "report_viewed",
+  "report_shared",
+  "checkout_clicked",
+  "paid",
+]);
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
@@ -56,6 +64,17 @@ export const scans = pgTable("scans", {
   shareOfVoice: real("share_of_voice"),
   citationRate: real("citation_rate"),
   invisibleRate: real("invisible_rate"),
+  /** Token opaco para el reporte público compartible (/r/[token]), desacoplado
+   *  del id interno que usa el fix pack. */
+  reportToken: uuid("report_token").notNull().defaultRandom().unique(),
+  /** Snapshot del reporte (score + lostPrompts + meta) para renderizar el público
+   *  sin recomputar. jsonb: ReportSnapshot (ver lib/report-read.ts). */
+  reportSnapshot: jsonb("report_snapshot"),
+  /** Atribución de origen del scan (UTM + referrer) para unir conversión→fuente. */
+  source: text("source"),
+  medium: text("medium"),
+  campaign: text("campaign"),
+  referrer: text("referrer"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -92,6 +111,18 @@ export const fixpacks = pgTable("fixpacks", {
     .references(() => scans.id, { onDelete: "cascade" }),
   items: jsonb("items").notNull(),
   generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Funnel: un evento por paso (con atribución de fuente). Ver lib/analytics/events.
+export const events = pgTable("events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  type: eventTypeEnum("type").notNull(),
+  scanId: uuid("scan_id").references(() => scans.id, { onDelete: "set null" }),
+  source: text("source"),
+  medium: text("medium"),
+  campaign: text("campaign"),
+  referrer: text("referrer"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // Tipos inferidos para uso en la app.

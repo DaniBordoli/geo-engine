@@ -6,6 +6,7 @@ import { scans } from "@/db/schema";
 import { buildCheckoutUrl } from "@/lib/billing/lemon";
 import { getExistingFixPack } from "@/lib/fixpack/read";
 import type { FixPack } from "@/lib/fixpack/types";
+import { track } from "@/lib/analytics/events";
 
 // Solo lectura (WEEK2_FIXES P0.3): la generación la dispara el webhook post-pago.
 export type FixPackState =
@@ -27,6 +28,11 @@ export async function getFixPackState(
 
   const pack = await getExistingFixPack(scanId);
   return pack ? { status: "ready", pack } : { status: "generating" };
+}
+
+// Funnel: lo dispara el botón "Desbloquear" al abrir el checkout (client).
+export async function trackCheckoutClick(scanId: string): Promise<void> {
+  await track("checkout_clicked", { scanId });
 }
 
 // Resuelve el scan pagado desde el id de orden de Lemon (lo persiste el webhook

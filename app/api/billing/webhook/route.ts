@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { scans } from "@/db/schema";
 import { verifyWebhookSignature, type LemonWebhook } from "@/lib/billing/lemon";
 import { generateFixPack } from "@/lib/fixpack/generator";
+import { track } from "@/lib/analytics/events";
 
 // La generación del fix pack corre en after() (post-respuesta) para no bloquear
 // el 200 del webhook. maxDuration da margen a esa generación en serverless.
@@ -30,6 +31,7 @@ export async function POST(req: Request): Promise<Response> {
   if (event === "order_created") {
     // orderId permite resolver este scan desde el redirect post-pago de Lemon.
     await db.update(scans).set({ paid: true, orderId }).where(eq(scans.id, scanId));
+    await track("paid", { scanId });
     // Genera el fix pack post-respuesta (idempotente → los reintentos de Lemon
     // no re-generan). El usuario, al volver, sólo lee la fila de la DB.
     after(async () => {
