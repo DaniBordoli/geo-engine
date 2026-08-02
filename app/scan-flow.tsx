@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { runScanAction } from "./actions";
 import type { ScanReport } from "@/lib/scan";
 import { ReportView } from "./report-view";
+import { FixPackSection } from "./fixpack-section";
 
 type Step = "domain" | "email" | "report";
 
@@ -39,6 +40,7 @@ export function ScanFlow() {
     return (
       <div className="flex w-full flex-col items-center">
         <ReportView report={report} />
+        <FixPackSection report={report} email={email} />
         <button
           onClick={() => {
             setReport(null);
