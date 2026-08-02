@@ -38,7 +38,7 @@ export function ScanFlow() {
 
   if (step === "report" && report) {
     return (
-      <div className="flex w-full flex-col items-center">
+      <div className="animate-fade-in flex w-full flex-col items-center">
         <ReportView report={report} />
         <FixPackSection report={report} email={email} />
         {report.dashboardToken && (
@@ -66,16 +66,53 @@ export function ScanFlow() {
 
   return (
     <div className="w-full max-w-xl text-center">
-      <h1 className="text-4xl font-bold tracking-tight text-zinc-100 sm:text-5xl">
-        ¿Te ve la IA?
+      <div
+        className="animate-fade-up mx-auto flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-zinc-400"
+        style={{ animationDelay: "0ms" }}
+      >
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+        </span>
+        Diagnóstico gratis · ~60 segundos
+      </div>
+
+      <h1
+        className="animate-fade-up mt-6 text-5xl font-bold tracking-tight sm:text-6xl"
+        style={{ animationDelay: "80ms" }}
+      >
+        <span className="bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent">
+          ¿Te ve la IA?
+        </span>
       </h1>
-      <p className="mx-auto mt-4 max-w-md text-zinc-400">
-        Escaneá tu visibilidad en respuestas de ChatGPT y Perplexity, y descubrí
-        quién te está ganando las citaciones.
+      <p
+        className="animate-fade-up mx-auto mt-4 max-w-md text-lg text-zinc-400"
+        style={{ animationDelay: "150ms" }}
+      >
+        Escaneá tu visibilidad en respuestas de IA y descubrí quién te está
+        ganando las citaciones.
       </p>
 
+      <div
+        className="animate-fade-up mt-5 flex flex-wrap items-center justify-center gap-2"
+        style={{ animationDelay: "220ms" }}
+      >
+        {["ChatGPT", "Perplexity", "Gemini", "Claude"].map((e) => (
+          <span
+            key={e}
+            className="rounded-full border border-white/10 bg-white/[0.02] px-2.5 py-1 text-xs text-zinc-500"
+          >
+            {e}
+          </span>
+        ))}
+      </div>
+
       {step === "domain" && (
-        <form onSubmit={submitDomain} className="mx-auto mt-8 flex max-w-md gap-2">
+        <form
+          onSubmit={submitDomain}
+          className="animate-fade-up mx-auto mt-8 flex max-w-md gap-2"
+          style={{ animationDelay: "300ms" }}
+        >
           <input
             autoFocus
             value={domain}
@@ -93,7 +130,7 @@ export function ScanFlow() {
       )}
 
       {step === "email" && (
-        <form onSubmit={submitEmail} className="mx-auto mt-8 max-w-md">
+        <form onSubmit={submitEmail} className="animate-fade-in mx-auto mt-8 max-w-md">
           <p className="mb-3 text-sm text-zinc-400">
             Dejá tu email para ver el reporte de{" "}
             <span className="text-zinc-200">{domain}</span>.

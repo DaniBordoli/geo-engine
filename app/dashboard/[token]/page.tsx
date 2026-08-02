@@ -67,10 +67,14 @@ export default async function DashboardPage({
       )}
 
       <div className="mt-10 space-y-8">
-        {data.domains.map(({ domain, points }) => {
+        {data.domains.map(({ domain, points }, i) => {
           const latest = points[points.length - 1];
           return (
-            <section key={domain} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <section
+              key={domain}
+              className="animate-fade-up rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-lg font-medium text-zinc-100">{domain}</h2>
                 {latest.paid && (

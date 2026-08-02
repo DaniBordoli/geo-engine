@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0b;
+  --background: #08080a;
   --foreground: #ededed;
 }
 
@@ -16,4 +16,97 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ---- Motion (transform/opacity, 140–220ms base; respeta reduced-motion) ---- */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, -3%, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease both;
+}
+
+/* Aurora de fondo: blobs radiales, blur, opacidad baja, deriva lenta. */
+.aurora {
+  position: fixed;
+  inset: -20% -10% auto -10%;
+  height: 70vh;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.5;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+}
+.aurora::before {
+  width: 42vw;
+  height: 42vw;
+  left: 8%;
+  top: 0;
+  background: radial-gradient(circle at center, #7c3aed 0%, transparent 65%);
+  animation: aurora-drift 18s ease-in-out infinite;
+}
+.aurora::after {
+  width: 38vw;
+  height: 38vw;
+  right: 6%;
+  top: -8%;
+  background: radial-gradient(circle at center, #10b981 0%, transparent 65%);
+  animation: aurora-drift 22s ease-in-out infinite reverse;
+}
+
+/* Barras que crecen: transición de width al montar. */
+.bar-grow {
+  transition: width 0.9s cubic-bezier(0.22, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in,
+  .aurora::before,
+  .aurora::after {
+    animation: none !important;
+  }
+  .bar-grow {
+    transition: none !important;
+  }
 }

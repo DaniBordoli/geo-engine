@@ -104,7 +104,7 @@ export function FixPackSection({ report, email }: { report: ScanReport; email: s
 
   return (
     <div className="mt-12 w-full max-w-3xl">
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-8">
+      <div className="animate-fade-up rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-8">
         <h3 className="text-xl font-semibold text-zinc-100">
           El fix pack: cómo recuperar estas citaciones
         </h3>

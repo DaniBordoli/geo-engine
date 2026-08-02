@@ -1,27 +1,36 @@
-import type { ScanReport } from "@/lib/scan";
+"use client";
 
-const pct = (x: number) => `${Math.round(x * 100)}%`;
+import type { ScanReport } from "@/lib/scan";
+import { CountUp, useMounted } from "./motion";
+
+const pctText = (n: number) => `${Math.round(n * 100)}%`;
+const pct = (x: number) => pctText(x);
 
 function StatCard({
   label,
   value,
   tone = "neutral",
   hint,
+  delay,
 }: {
   label: string;
-  value: string;
+  value: number;
   tone?: "neutral" | "bad";
   hint?: string;
+  delay: number;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+    <div
+      className="animate-fade-up rounded-xl border border-white/10 bg-white/[0.03] p-5"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <div className="text-xs uppercase tracking-wide text-zinc-500">{label}</div>
       <div
         className={`mt-2 text-4xl font-semibold tabular-nums ${
           tone === "bad" ? "text-red-400" : "text-zinc-100"
         }`}
       >
-        {value}
+        <CountUp value={value} format={pctText} />
       </div>
       {hint && <div className="mt-1 text-sm text-zinc-500">{hint}</div>}
     </div>
@@ -30,13 +39,17 @@ function StatCard({
 
 export function ReportView({ report }: { report: ScanReport }) {
   const { score } = report;
+  const mounted = useMounted();
   const brandLow = score.shareOfVoice < 0.15;
   const topRival = score.leaderboard[0];
 
   return (
     <div className="w-full max-w-3xl">
       {/* Encabezado */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div
+        className="animate-fade-up mb-6 flex flex-wrap items-center gap-3"
+        style={{ animationDelay: "40ms" }}
+      >
         <h2 className="text-lg font-medium text-zinc-200">{report.domain}</h2>
         {report.mock && (
           <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-xs text-amber-300">
@@ -49,17 +62,20 @@ export function ReportView({ report }: { report: ScanReport }) {
       </div>
 
       {/* El cachetazo */}
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-8">
+      <div className="animate-fade-up rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-8">
         <div className="text-sm text-zinc-400">Tu share-of-voice en respuestas de IA</div>
         <div
           className={`mt-1 text-7xl font-bold tabular-nums ${
             brandLow ? "text-red-400" : "text-emerald-400"
           }`}
         >
-          {pct(score.shareOfVoice)}
+          <CountUp value={score.shareOfVoice} durationMs={1100} format={pctText} />
         </div>
         <p className="mt-3 max-w-xl text-zinc-400">
-          Sos <span className="font-semibold text-zinc-200">invisible en {pct(score.invisibleRate)}</span>{" "}
+          Sos{" "}
+          <span className="font-semibold text-zinc-200">
+            invisible en {pct(score.invisibleRate)}
+          </span>{" "}
           de los prompts de compra.{" "}
           {topRival && (
             <>
@@ -72,39 +88,42 @@ export function ReportView({ report }: { report: ScanReport }) {
 
       {/* Stats */}
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Share of voice" value={pct(score.shareOfVoice)} tone={brandLow ? "bad" : "neutral"} />
-        <StatCard label="Tasa de citación" value={pct(score.citationRate)} hint="prompts que te citan como fuente" />
-        <StatCard label="Invisible" value={pct(score.invisibleRate)} tone={score.invisibleRate > 0.5 ? "bad" : "neutral"} hint="prompts donde no aparecés" />
+        <StatCard label="Share of voice" value={score.shareOfVoice} tone={brandLow ? "bad" : "neutral"} delay={120} />
+        <StatCard label="Tasa de citación" value={score.citationRate} hint="prompts que te citan como fuente" delay={200} />
+        <StatCard label="Invisible" value={score.invisibleRate} tone={score.invisibleRate > 0.5 ? "bad" : "neutral"} hint="prompts donde no aparecés" delay={280} />
       </div>
 
       {/* Leaderboard */}
       {score.leaderboard.length > 0 && (
-        <div className="mt-8">
+        <div className="animate-fade-up mt-8" style={{ animationDelay: "320ms" }}>
           <h3 className="mb-3 text-sm uppercase tracking-wide text-zinc-500">
             Quién te está ganando
           </h3>
           <div className="space-y-2">
-            {score.leaderboard.map((c) => (
-              <div key={c.name} className="flex items-center gap-3">
-                <div className="w-28 shrink-0 truncate text-sm text-zinc-300">{c.name}</div>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
-                  <div
-                    className="h-full rounded-full bg-zinc-400"
-                    style={{ width: `${Math.max(2, Math.round(c.shareOfVoice * 100))}%` }}
-                  />
+            {score.leaderboard.map((c, i) => {
+              const w = Math.max(2, Math.round(c.shareOfVoice * 100));
+              return (
+                <div key={c.name} className="flex items-center gap-3">
+                  <div className="w-28 shrink-0 truncate text-sm text-zinc-300">{c.name}</div>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+                    <div
+                      className="bar-grow h-full rounded-full bg-zinc-400"
+                      style={{ width: mounted ? `${w}%` : "0%", transitionDelay: `${350 + i * 70}ms` }}
+                    />
+                  </div>
+                  <div className="w-12 shrink-0 text-right text-sm tabular-nums text-zinc-400">
+                    {pct(c.shareOfVoice)}
+                  </div>
                 </div>
-                <div className="w-12 shrink-0 text-right text-sm tabular-nums text-zinc-400">
-                  {pct(c.shareOfVoice)}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Prompts perdidos */}
       {report.lostPrompts.length > 0 && (
-        <div className="mt-8">
+        <div className="animate-fade-up mt-8" style={{ animationDelay: "400ms" }}>
           <h3 className="mb-3 text-sm uppercase tracking-wide text-zinc-500">
             Prompts donde sos invisible
           </h3>
