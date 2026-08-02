@@ -13,8 +13,19 @@ const SYSTEM =
 
 type PplxResponse = {
   choices: { message: { content: string } }[];
+  // Las fuentes vinieron históricamente en `citations` (string[]) y en versiones
+  // más nuevas en `search_results` ({ url }[]). Normalizamos ambas.
   citations?: string[];
+  search_results?: { url?: string }[];
 };
+
+function extractCitedUrls(data: PplxResponse): string[] {
+  if (data.citations?.length) return data.citations;
+  if (data.search_results?.length) {
+    return data.search_results.map((s) => s.url).filter((u): u is string => Boolean(u));
+  }
+  return [];
+}
 
 export function createPerplexityEngine(apiKey: string): Engine {
   return {
@@ -41,7 +52,7 @@ export function createPerplexityEngine(apiKey: string): Engine {
       return {
         engine: "perplexity",
         text: data.choices[0]?.message?.content ?? "",
-        citedUrls: data.citations ?? [],
+        citedUrls: extractCitedUrls(data),
         fetchedAt: new Date().toISOString(),
       };
     },

@@ -1,14 +1,17 @@
 import { getAnalyzer } from "@/lib/agents/analyzer";
 import { getPromptGenerator } from "@/lib/agents/prompt-generator";
-import type { ResponseAnalysis } from "@/lib/agents/types";
 import { getEngines } from "@/lib/engines";
+import type { EngineResponse } from "@/lib/engines/types";
 import { scoreScan } from "@/lib/scoring";
 import type { ScanScore } from "@/lib/scoring/types";
 import { mapLimit } from "@/lib/util/async";
+import { withRetry } from "@/lib/util/retry";
 import { getVertical } from "@/lib/verticals";
 import { ecommerce } from "@/lib/verticals/ecommerce";
 
-const MAX_PROMPTS = 40;
+// Free tier acotado (P2.1): ~40 prompts × engines dentro de un server action
+// puede pasarse del timeout serverless. Configurable por env.
+const MAX_PROMPTS = Number(process.env.SCAN_MAX_PROMPTS ?? 15);
 const ENGINE_CONCURRENCY = 5;
 
 export type ScanInput = {
@@ -30,6 +33,8 @@ export type ScanReport = {
   score: ScanScore;
   /** Ejemplos de prompts donde la marca es invisible (para el reporte). */
   lostPrompts: LostPrompt[];
+  /** Jobs (prompt × engine) que fallaron tras los reintentos → reporte parcial. */
+  failedJobs: number;
   /** Id del scan si se persistió en la DB (undefined si corrió en memoria). */
   scanId?: string;
 };
@@ -53,20 +58,41 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
   const analyzer = getAnalyzer();
   const { engines, mock } = getEngines();
 
-  const prompts = (await generator.generate(vertical, brand)).slice(0, MAX_PROMPTS);
+  const prompts = (
+    await withRetry(() => generator.generate(vertical, brand))
+  ).slice(0, MAX_PROMPTS);
 
   // Producto cartesiano prompt × engine, con índice del prompt para reagrupar.
   const jobs = prompts.flatMap((prompt, pi) =>
     engines.map((engine) => ({ pi, prompt, engine })),
   );
 
-  const jobResults = await mapLimit(jobs, ENGINE_CONCURRENCY, async ({ pi, prompt, engine }) => {
-    const response = await engine.run({ prompt: prompt.text, brand });
-    const analysis = await analyzer.analyze(response, brand);
-    return { pi, promptText: prompt.text, engineId: engine.id, analysis };
+  // Fase 1 — engines, con retry y degradación con gracia: un job que falla tras
+  // los reintentos se descarta (reporte parcial) en vez de tumbar el scan.
+  const engineResults = await mapLimit(jobs, ENGINE_CONCURRENCY, async (job) => {
+    try {
+      const response = await withRetry(() =>
+        job.engine.run({ prompt: job.prompt.text, brand }),
+      );
+      return { pi: job.pi, promptText: job.prompt.text, engineId: job.engine.id, response };
+    } catch (err) {
+      console.error(`engine ${job.engine.id} falló: "${job.prompt.text}"`, err);
+      return null;
+    }
   });
+  const okJobs = engineResults.filter((r): r is NonNullable<typeof r> => r !== null);
+  const failedJobs = engineResults.length - okJobs.length;
 
-  const analyses: ResponseAnalysis[] = jobResults.map((r) => r.analysis);
+  // Fase 2 — análisis en batch (menos llamadas al LLM). Nunca tira: degrada.
+  const responses: EngineResponse[] = okJobs.map((r) => r.response);
+  const analyses = await analyzer.analyzeMany(responses, brand);
+  const jobResults = okJobs.map((r, i) => ({
+    pi: r.pi,
+    promptText: r.promptText,
+    engineId: r.engineId,
+    analysis: analyses[i],
+  }));
+
   const score = scoreScan(analyses);
 
   const lostPrompts: LostPrompt[] = jobResults
@@ -107,6 +133,7 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
     engineIds: engines.map((e) => e.id),
     score,
     lostPrompts,
+    failedJobs,
     scanId,
   };
 }

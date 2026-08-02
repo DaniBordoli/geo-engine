@@ -28,4 +28,6 @@ export type ResponseAnalysis = {
 /** Detecta mención, citación, posición, sentiment y competidores. */
 export interface ResponseAnalyzer {
   analyze(response: EngineResponse, brand: string): Promise<ResponseAnalysis>;
+  /** Versión batch: analiza varias respuestas con menos llamadas al LLM. */
+  analyzeMany(responses: EngineResponse[], brand: string): Promise<ResponseAnalysis[]>;
 }

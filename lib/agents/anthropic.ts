@@ -1,9 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Modelo de los agentes. Configurable en un solo lugar.
-// Nota de costo: el analizador corre una vez por (prompt × engine) — decenas de
-// llamadas por scan. Si el volumen pesa, evaluar un modelo más barato acá.
-export const AGENT_MODEL = "claude-opus-5";
+// Modelos de agente, separados por rol y costo.
+// Generador: pocas llamadas por scan (1) → prioriza calidad.
+export const GENERATOR_MODEL = "claude-opus-5";
+// Analizador: 1 llamada por (prompt × engine), decenas por scan → modelo barato.
+export const ANALYZER_MODEL = "claude-haiku-4-5-20251001";
 
 let client: Anthropic | null = null;
 

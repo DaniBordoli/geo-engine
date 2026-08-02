@@ -1,6 +1,6 @@
 import type { VerticalConfig } from "@/lib/verticals/types";
 import type { GeneratedPrompt, PromptGenerator } from "./types";
-import { AGENT_MODEL, getAnthropic, parseJsonContent } from "./anthropic";
+import { GENERATOR_MODEL, getAnthropic, parseJsonContent } from "./anthropic";
 
 const SCHEMA = {
   type: "object",
@@ -28,7 +28,7 @@ function realGenerator(): PromptGenerator {
   return {
     async generate(config: VerticalConfig, brand: string): Promise<GeneratedPrompt[]> {
       const message = await getAnthropic().messages.create({
-        model: AGENT_MODEL,
+        model: GENERATOR_MODEL,
         max_tokens: 8192,
         system:
           "You generate buy-intent search prompts a shopper would ask an AI " +
