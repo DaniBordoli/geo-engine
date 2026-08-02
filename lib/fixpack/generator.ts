@@ -6,6 +6,7 @@ import { getVertical } from "@/lib/verticals";
 import { ecommerce } from "@/lib/verticals/ecommerce";
 import { diagnoseCause } from "./gap-cause";
 import { generateContent } from "./content";
+import { fetchSiteText } from "./crawl";
 import { generateSchema } from "./schema";
 import { generateOffsite } from "./offsite";
 import { prioritize, scorePriority } from "./prioritize";
@@ -44,10 +45,13 @@ export async function generateFixPack(scanId: string): Promise<FixPack> {
   const vertical = getVertical(scan.verticalId) ?? ecommerce;
   const gaps = gapsFrom(scan).slice(0, MAX_GAPS);
 
+  // Aterrizar el contenido en datos reales: crawleamos la homepage UNA vez.
+  const siteText = await fetchSiteText(scan.domain);
+
   const perGap = await mapLimit(gaps, GAP_CONCURRENCY, async (gap) => {
     const cause = await diagnoseCause(gap, scan.brand, vertical);
     const [content, schema, offsite] = await Promise.all([
-      generateContent(gap, cause, scan.brand, vertical),
+      generateContent(gap, cause, scan.brand, vertical, siteText),
       generateSchema(gap, scan.brand),
       generateOffsite(gap, scan.brand),
     ]);
