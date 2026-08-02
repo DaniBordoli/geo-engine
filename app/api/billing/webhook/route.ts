@@ -1,10 +1,17 @@
+import { after } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { scans } from "@/db/schema";
 import { verifyWebhookSignature, type LemonWebhook } from "@/lib/billing/lemon";
+import { generateFixPack } from "@/lib/fixpack/generator";
+
+// La generación del fix pack corre en after() (post-respuesta) para no bloquear
+// el 200 del webhook. maxDuration da margen a esa generación en serverless.
+export const maxDuration = 60;
 
 // Webhook de Lemon Squeezy. Verifica la firma sobre el body CRUDO (no parsear
-// antes de verificar), y marca el scan como pago (entitlement por-scan).
+// antes de verificar), marca el scan como pago, y dispara la generación del fix
+// pack (idempotente) fuera del camino de respuesta.
 export async function POST(req: Request): Promise<Response> {
   const raw = await req.text();
   const signature = req.headers.get("x-signature");
@@ -17,11 +24,19 @@ export async function POST(req: Request): Promise<Response> {
   const event = payload.meta?.event_name;
   const scanId = payload.meta?.custom_data?.scan_id;
 
-  // Sin scan_id no hay nada que desbloquear; 200 para que Lemon no reintente.
   if (!scanId) return new Response("no scan_id", { status: 200 });
 
   if (event === "order_created") {
     await db.update(scans).set({ paid: true }).where(eq(scans.id, scanId));
+    // Genera el fix pack post-respuesta (idempotente → los reintentos de Lemon
+    // no re-generan). El usuario, al volver, sólo lee la fila de la DB.
+    after(async () => {
+      try {
+        await generateFixPack(scanId);
+      } catch (err) {
+        console.error("generación post-pago falló", scanId, err);
+      }
+    });
   } else if (event === "order_refunded") {
     await db.update(scans).set({ paid: false }).where(eq(scans.id, scanId));
   }

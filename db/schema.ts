@@ -34,6 +34,7 @@ export const sentimentEnum = pgEnum("sentiment", [
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
+  /** LEGACY: el entitlement se movió a scans.paid (por-scan). No se usa. */
   plan: planEnum("plan").notNull().default("free"),
   /** Token opaco para la URL del dashboard (no exponer email en la URL). */
   dashboardToken: uuid("dashboard_token").notNull().defaultRandom().unique(),
@@ -84,8 +85,10 @@ export const results = pgTable("results", {
 
 export const fixpacks = pgTable("fixpacks", {
   id: uuid("id").primaryKey().defaultRandom(),
+  // UNIQUE: un fix pack por scan (idempotencia — WEEK2_FIXES P0.2).
   scanId: uuid("scan_id")
     .notNull()
+    .unique()
     .references(() => scans.id, { onDelete: "cascade" }),
   items: jsonb("items").notNull(),
   generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),

@@ -1,0 +1,1 @@
+ALTER TABLE "fixpacks" ADD CONSTRAINT "fixpacks_scan_id_unique" UNIQUE("scan_id");

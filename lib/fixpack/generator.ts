@@ -9,6 +9,7 @@ import { generateContent } from "./content";
 import { generateSchema } from "./schema";
 import { generateOffsite } from "./offsite";
 import { prioritize, scorePriority } from "./prioritize";
+import { getExistingFixPack } from "./read";
 import type { FixItem, FixPack, Gap } from "./types";
 
 const MAX_GAPS = Number(process.env.FIXPACK_MAX_GAPS ?? 6);
@@ -31,6 +32,11 @@ function gapsFrom(scan: Awaited<ReturnType<typeof getScanData>>): Gap[] {
 
 // Orquesta el fix pack completo (full auto) para un scan pago y lo persiste.
 export async function generateFixPack(scanId: string): Promise<FixPack> {
+  // Idempotencia (P0.2): si ya existe, no re-generar (evita ~30 llamadas LLM
+  // y filas duplicadas al recargar / re-disparar el webhook).
+  const already = await getExistingFixPack(scanId);
+  if (already) return already;
+
   const scan = await getScanData(scanId);
   if (!scan) throw new Error(`scan ${scanId} no existe`);
 
@@ -58,8 +64,10 @@ export async function generateFixPack(scanId: string): Promise<FixPack> {
         category: "schema-markup",
         gap: gap.prompt,
         cause,
-        title: `JSON-LD para "${gap.prompt}"`,
-        body: "```json\n" + schema + "\n```",
+        title: schema.valid
+          ? `JSON-LD para "${gap.prompt}"`
+          : `⚠️ Revisar — JSON-LD para "${gap.prompt}"`,
+        body: "```json\n" + schema.jsonld + "\n```",
         priority: scorePriority("schema-markup", n),
       },
       {
@@ -81,6 +89,8 @@ export async function generateFixPack(scanId: string): Promise<FixPack> {
     generatedAt: new Date().toISOString(),
   };
 
-  await db.insert(fixpacks).values({ scanId, items });
-  return pack;
+  // onConflictDoNothing + re-lectura: si una generación concurrente ganó la
+  // carrera (unique en scan_id), devolvemos la persistida, no la nuestra.
+  await db.insert(fixpacks).values({ scanId, items }).onConflictDoNothing();
+  return (await getExistingFixPack(scanId)) ?? pack;
 }

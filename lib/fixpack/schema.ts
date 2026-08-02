@@ -2,9 +2,12 @@ import { ANALYZER_MODEL, getAnthropic, textContent } from "@/lib/agents/anthropi
 import { withRetry } from "@/lib/util/retry";
 import type { Gap } from "./types";
 
+export type SchemaResult = { jsonld: string; valid: boolean };
+
 // Genera el JSON-LD (schema.org) relevante al gap: FAQPage, Product, etc.
-// Modelo barato: es una tarea estructurada y mecánica.
-export async function generateSchema(gap: Gap, brand: string): Promise<string> {
+// Modelo barato. Valida que sea JSON parseable (P2.2): si el modelo devuelve
+// prosa, marcamos valid=false para que el item se muestre como "revisar".
+export async function generateSchema(gap: Gap, brand: string): Promise<SchemaResult> {
   const message = await withRetry(() =>
     getAnthropic().messages.create({
       model: ANALYZER_MODEL,
@@ -21,5 +24,19 @@ export async function generateSchema(gap: Gap, brand: string): Promise<string> {
       ],
     }),
   );
-  return textContent(message).trim();
+
+  // Sacar fences si el modelo los agregó igual, y validar como JSON.
+  const jsonld = textContent(message)
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
+  let valid = false;
+  try {
+    JSON.parse(jsonld);
+    valid = true;
+  } catch {
+    valid = false;
+  }
+  return { jsonld, valid };
 }

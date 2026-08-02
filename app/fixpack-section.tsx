@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { getFixPackAction } from "./fixpack-actions";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getFixPackState, type FixPackState } from "./fixpack-actions";
 import type { ScanReport } from "@/lib/scan";
 import type { FixItem, FixPack } from "@/lib/fixpack/types";
 import { fixPackToMarkdown } from "@/lib/fixpack/markdown";
@@ -10,13 +10,6 @@ const LABEL: Record<FixItem["category"], string> = {
   "citable-content": "Contenido citable",
   "schema-markup": "Schema markup",
   "off-site-action": "Acciones off-site",
-};
-
-// Un item de muestra (estático, sin costo) para el teaser del estado bloqueado.
-const TEASER: Pick<FixItem, "category" | "title" | "cause"> = {
-  category: "citable-content",
-  title: "Guía comparativa citable para tu prompt perdido",
-  cause: "Ausente en las fuentes que el LLM lee para esta consulta.",
 };
 
 function Item({ item, i }: { item: FixItem; i: number }) {
@@ -43,64 +36,69 @@ function Item({ item, i }: { item: FixItem; i: number }) {
   );
 }
 
-export function FixPackSection({ report, email }: { report: ScanReport; email: string }) {
-  const [pack, setPack] = useState<FixPack | null>(null);
-  const [status, setStatus] = useState<"locked" | "loading" | "error">("locked");
-  const [hint, setHint] = useState<string | null>(null);
-
-  if (!report.scanId) return null;
-
-  async function check(afterPayment: boolean) {
-    setStatus("loading");
-    setHint(afterPayment ? "Confirmando el pago y generando tu fix pack…" : null);
-    const res = await getFixPackAction(report.scanId!, email);
-    if (res.ok) {
-      setPack(res.pack);
-      return;
-    }
-    if (res.locked) {
-      setStatus("locked");
-      if (afterPayment) {
-        setHint("Todavía no confirmamos el pago. Esperá unos segundos y reintentá.");
-      } else {
-        window.open(res.checkoutUrl, "_blank");
-        setHint("Abrimos el checkout en otra pestaña. Cuando pagues, volvé y tocá “Ya pagué”.");
-      }
-    } else {
-      setStatus("error");
-      setHint(res.error);
-    }
-  }
-
-  if (pack) {
-    const md = fixPackToMarkdown(pack, report.domain);
-    return (
-      <div className="mt-12 w-full max-w-3xl">
-        <div className="mb-4 flex items-center gap-3">
-          <h3 className="text-lg font-medium text-emerald-400">
-            Fix pack desbloqueado · {pack.items.length} acciones
-          </h3>
-          <button
-            onClick={() => {
-              const blob = new Blob([md], { type: "text/markdown" });
-              const a = document.createElement("a");
-              a.href = URL.createObjectURL(blob);
-              a.download = `fixpack-${report.brand}.md`;
-              a.click();
-            }}
-            className="ml-auto rounded-lg border border-white/15 px-3 py-1.5 text-sm text-zinc-300 hover:border-white/30"
-          >
-            Descargar .md
-          </button>
-        </div>
-        <div className="space-y-4">
-          {pack.items.map((item, i) => (
-            <Item key={i} item={item} i={i} />
-          ))}
-        </div>
+function PaidView({ pack, report }: { pack: FixPack; report: ScanReport }) {
+  return (
+    <div className="animate-fade-in mt-12 w-full max-w-3xl">
+      <div className="mb-4 flex items-center gap-3">
+        <h3 className="text-lg font-medium text-emerald-400">
+          Fix pack desbloqueado · {pack.items.length} acciones
+        </h3>
+        <button
+          onClick={() => {
+            const blob = new Blob([fixPackToMarkdown(pack, report.domain)], {
+              type: "text/markdown",
+            });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `fixpack-${report.brand}.md`;
+            a.click();
+          }}
+          className="ml-auto rounded-lg border border-white/15 px-3 py-1.5 text-sm text-zinc-300 hover:border-white/30"
+        >
+          Descargar .md
+        </button>
       </div>
-    );
+      <div className="space-y-4">
+        {pack.items.map((item, i) => (
+          <Item key={i} item={item} i={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function FixPackSection({ report, email }: { report: ScanReport; email: string }) {
+  const scanId = report.scanId;
+  const [state, setState] = useState<FixPackState | null>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!scanId) return;
+    setState(await getFixPackState(scanId, email));
+  }, [scanId, email]);
+
+  // Chequeo inicial.
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  // Poll mientras se genera (post-pago); no pollea en locked.
+  useEffect(() => {
+    if (state?.status !== "generating") return;
+    pollRef.current = setTimeout(refresh, 4000);
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
+  }, [state, refresh]);
+
+  if (!scanId) return null;
+
+  if (state?.status === "ready") {
+    return <PaidView pack={state.pack} report={report} />;
   }
+
+  // Teaser dinámico: usa un prompt perdido real si lo hay (P2.3).
+  const teaserGap = report.lostPrompts[0]?.prompt;
 
   return (
     <div className="mt-12 w-full max-w-3xl">
@@ -114,14 +112,18 @@ export function FixPackSection({ report, email }: { report: ScanReport; email: s
           que perdés; esto lo arregla.
         </p>
 
-        {/* Teaser: un item de muestra + filas bloqueadas */}
         <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-5">
           <span className="rounded-full border border-white/10 px-2 py-0.5 text-xs text-zinc-400">
-            {LABEL[TEASER.category]} · ejemplo
+            {LABEL["citable-content"]} · ejemplo
           </span>
-          <h4 className="mt-2 font-medium text-zinc-100">{TEASER.title}</h4>
+          <h4 className="mt-2 font-medium text-zinc-100">
+            {teaserGap
+              ? `Contenido citable para: “${teaserGap}”`
+              : "Guía comparativa citable para tu prompt perdido"}
+          </h4>
           <p className="mt-1 text-sm text-zinc-500">
-            <span className="text-zinc-400">Causa:</span> {TEASER.cause}
+            <span className="text-zinc-400">Causa:</span> ausente en las fuentes que el
+            LLM lee para esta consulta.
           </p>
         </div>
         <div className="mt-2 space-y-2">
@@ -135,23 +137,35 @@ export function FixPackSection({ report, email }: { report: ScanReport; email: s
           ))}
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => check(false)}
-            disabled={status === "loading"}
-            className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white disabled:opacity-60"
-          >
-            {status === "loading" ? "Procesando…" : "Desbloquear fix pack — US$49"}
-          </button>
-          <button
-            onClick={() => check(true)}
-            disabled={status === "loading"}
-            className="text-sm text-zinc-500 hover:text-zinc-300 disabled:opacity-60"
-          >
-            Ya pagué → ver fix pack
-          </button>
-        </div>
-        {hint && <p className="mt-3 text-sm text-zinc-400">{hint}</p>}
+        {state?.status === "generating" ? (
+          <div className="mt-6 flex items-center gap-3 text-zinc-300">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+            Tu pago se confirmó. Estamos generando tu fix pack…
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => {
+                // Síncrono dentro del gesto (P1.1): no lo bloquea el popup blocker.
+                if (state?.status === "locked") window.open(state.checkoutUrl, "_blank");
+              }}
+              disabled={state?.status !== "locked"}
+              className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white disabled:opacity-60"
+            >
+              Desbloquear fix pack — US$49
+            </button>
+            <button
+              onClick={refresh}
+              className="text-sm text-zinc-500 hover:text-zinc-300"
+            >
+              Ya pagué → actualizar
+            </button>
+          </div>
+        )}
+
+        {state?.status === "error" && (
+          <p className="mt-3 text-sm text-red-400">{state.error}</p>
+        )}
       </div>
     </div>
   );
