@@ -19,11 +19,18 @@ function hostMatchesBrand(url: string, brand: string): boolean {
   }
 }
 
+// El token de marca sale del dominio concatenado ("theordinary"), pero en prosa
+// los modelos escriben "The Ordinary" (con espacio). Normalizamos ambos lados
+// sacando no-alfanuméricos para que el fallback determinista los matchee.
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 type Base = Pick<ResponseAnalysis, "mentioned" | "cited" | "citedUrls">;
 
 function computeBase(response: EngineResponse, brand: string): Base {
   return {
-    mentioned: response.text.toLowerCase().includes(brand),
+    mentioned: normalize(response.text).includes(normalize(brand)),
     cited: response.citedUrls.some((u) => hostMatchesBrand(u, brand)),
     citedUrls: response.citedUrls,
   };
@@ -32,6 +39,7 @@ function computeBase(response: EngineResponse, brand: string): Base {
 // --- Enriquecimiento LLM (posición / sentiment / competidores) --------------
 
 type Enrichment = {
+  mentioned: boolean;
   position: number | null;
   sentiment: ResponseAnalysis["sentiment"];
   competitors: string[];
@@ -47,6 +55,7 @@ const ENRICH_SCHEMA = {
         type: "object",
         additionalProperties: false,
         properties: {
+          mentioned: { type: "boolean" },
           position: { anyOf: [{ type: "integer" }, { type: "null" }] },
           sentiment: {
             anyOf: [
@@ -56,7 +65,7 @@ const ENRICH_SCHEMA = {
           },
           competitors: { type: "array", items: { type: "string" } },
         },
-        required: ["position", "sentiment", "competitors"],
+        required: ["mentioned", "position", "sentiment", "competitors"],
       },
     },
   },
@@ -71,10 +80,13 @@ async function enrichGroup(texts: string[], brand: string): Promise<Enrichment[]
       model: ANALYZER_MODEL,
       max_tokens: 2048,
       system:
-        "You analyze AI engine answers to detect how a brand appears. For each " +
-        "answer return: position (brand's 1-based rank among all brands named, " +
-        "null if absent), sentiment toward the brand, and competitors (other " +
-        `brands named, excluding the target). Return exactly ${texts.length} ` +
+        "You analyze AI engine answers to detect how a brand appears. The target " +
+        "brand may be written differently than given (spacing, capitalization, " +
+        "possessives, common aliases) — judge presence by meaning, not exact " +
+        "string. For each answer return: mentioned (true if the target brand " +
+        "appears in any form), position (brand's 1-based rank among all brands " +
+        "named, null if absent), sentiment toward the brand, and competitors " +
+        `(other brands named, excluding the target). Return exactly ${texts.length} ` +
         "items in the same order.",
       messages: [
         {
@@ -95,20 +107,23 @@ async function enrichGroup(texts: string[], brand: string): Promise<Enrichment[]
 }
 
 function combine(base: Base, enr: Enrichment | null): ResponseAnalysis {
+  // Mención: el LLM (que entiende variantes de nombre) manda; si falló, cae al
+  // determinista normalizado. Posición/sentiment solo si la marca aparece.
+  const mentioned = enr ? enr.mentioned : base.mentioned;
   return {
-    mentioned: base.mentioned,
+    mentioned,
     cited: base.cited,
     citedUrls: base.citedUrls,
-    // Posición y sentiment solo tienen sentido si la marca aparece.
-    position: base.mentioned ? (enr?.position ?? null) : null,
-    sentiment: base.mentioned ? (enr?.sentiment ?? null) : null,
+    position: mentioned ? (enr?.position ?? null) : null,
+    sentiment: mentioned ? (enr?.sentiment ?? null) : null,
     competitors: enr?.competitors ?? [],
   };
 }
 
-// Analizador real. Mención/citación deterministas; el LLM (Haiku, en batch) solo
-// aporta posición/sentiment/competidores. Nunca tira: si el LLM falla, degrada a
-// la base determinista (P0.2).
+// Analizador real. Citación determinista (host↔dominio); mención por LLM (Haiku,
+// en batch) — entiende variantes de nombre — con fallback determinista normalizado.
+// Posición/sentiment/competidores también del LLM. Nunca tira: si el LLM falla,
+// degrada a la base determinista (P0.2).
 function realAnalyzer(): ResponseAnalyzer {
   async function analyzeMany(responses: EngineResponse[], brandRaw: string) {
     const brand = brandRaw.toLowerCase();
