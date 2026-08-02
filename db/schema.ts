@@ -49,6 +49,9 @@ export const scans = pgTable("scans", {
   status: scanStatusEnum("status").notNull().default("pending"),
   /** Entitlement por-scan: el pago único desbloquea el fix pack de ESTE scan. */
   paid: boolean("paid").notNull().default(false),
+  /** Id de la orden de Lemon (order_created). Resuelve el scan desde el redirect
+   *  post-pago (/fixpack/resolve?order=[order_id]) sin exponer el scan_id. */
+  orderId: text("order_id").unique(),
   /** Resumen de score persistido para la tendencia del dashboard (0–1). */
   shareOfVoice: real("share_of_voice"),
   citationRate: real("citation_rate"),

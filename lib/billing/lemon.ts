@@ -12,6 +12,9 @@ export function buildCheckoutUrl(scanId: string, email?: string): string {
   const url = new URL(base);
   url.searchParams.set("checkout[custom][scan_id]", scanId);
   if (email) url.searchParams.set("checkout[email]", email);
+  // El redirect post-pago NO se puede fijar por query param en el checkout hosted
+  // (sólo vía el API create-checkout, que evitamos). Se configura a nivel producto
+  // en Lemon → /fixpack/resolve?order=[order_id], y ahí resolvemos el scan.
   return url.toString();
 }
 
@@ -33,4 +36,7 @@ export type LemonWebhook = {
     event_name: string;
     custom_data?: { scan_id?: string };
   };
+  // data.id = id de la orden; lo persistimos para resolver el scan desde el
+  // redirect post-pago (que sólo tiene el [order_id], no el scan_id).
+  data?: { id?: string };
 };

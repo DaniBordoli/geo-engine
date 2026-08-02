@@ -28,3 +28,15 @@ export async function getFixPackState(
   const pack = await getExistingFixPack(scanId);
   return pack ? { status: "ready", pack } : { status: "generating" };
 }
+
+// Resuelve el scan pagado desde el id de orden de Lemon (lo persiste el webhook
+// order_created). Es el puente del redirect post-pago /fixpack/resolve?order=…,
+// que sólo trae el [order_id] y no el scan_id. Null si el webhook aún no llegó.
+export async function resolveScanIdByOrder(orderId: string): Promise<string | null> {
+  if (!orderId) return null;
+  const [scan] = await db
+    .select({ id: scans.id })
+    .from(scans)
+    .where(eq(scans.orderId, orderId));
+  return scan?.id ?? null;
+}
