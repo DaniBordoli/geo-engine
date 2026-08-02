@@ -4,6 +4,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  real,
   text,
   timestamp,
   uuid,
@@ -34,6 +35,8 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   plan: planEnum("plan").notNull().default("free"),
+  /** Token opaco para la URL del dashboard (no exponer email en la URL). */
+  dashboardToken: uuid("dashboard_token").notNull().defaultRandom().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -48,6 +51,10 @@ export const scans = pgTable("scans", {
   status: scanStatusEnum("status").notNull().default("pending"),
   /** Entitlement por-scan: el pago único desbloquea el fix pack de ESTE scan. */
   paid: boolean("paid").notNull().default(false),
+  /** Resumen de score persistido para la tendencia del dashboard (0–1). */
+  shareOfVoice: real("share_of_voice"),
+  citationRate: real("citation_rate"),
+  invisibleRate: real("invisible_rate"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -41,6 +41,14 @@ export function ScanFlow() {
       <div className="flex w-full flex-col items-center">
         <ReportView report={report} />
         <FixPackSection report={report} email={email} />
+        {report.dashboardToken && (
+          <a
+            href={`/dashboard/${report.dashboardToken}`}
+            className="mt-10 text-sm text-emerald-400 hover:text-emerald-300"
+          >
+            Ver tu dashboard (historial + tendencia) →
+          </a>
+        )}
         <button
           onClick={() => {
             setReport(null);
@@ -48,7 +56,7 @@ export function ScanFlow() {
             setEmail("");
             setStep("domain");
           }}
-          className="mt-10 text-sm text-zinc-500 hover:text-zinc-300"
+          className="mt-4 text-sm text-zinc-500 hover:text-zinc-300"
         >
           ← escanear otro dominio
         </button>

@@ -37,6 +37,8 @@ export type ScanReport = {
   failedJobs: number;
   /** Id del scan si se persistió en la DB (undefined si corrió en memoria). */
   scanId?: string;
+  /** Token del usuario para el link al dashboard (si se persistió). */
+  dashboardToken?: string;
 };
 
 // Deriva el token de marca desde el dominio: "https://www.nike.com/x" → "nike".
@@ -103,14 +105,20 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
   // Persistencia (best-effort): solo con DB configurada y email presente.
   // Un fallo al persistir no debe tumbar el reporte (el reporte es el producto).
   let scanId: string | undefined;
+  let dashboardToken: string | undefined;
   if (process.env.DATABASE_URL && input.email) {
     try {
       const { persistScan } = await import("@/lib/persist");
-      scanId = await persistScan({
+      const persisted = await persistScan({
         email: input.email,
         domain: input.domain,
         verticalId: vertical.id,
         competitors: score.leaderboard.map((c) => c.name),
+        score: {
+          shareOfVoice: score.shareOfVoice,
+          citationRate: score.citationRate,
+          invisibleRate: score.invisibleRate,
+        },
         prompts: prompts.map((p, pi) => ({
           text: p.text,
           archetype: p.archetype,
@@ -119,6 +127,8 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
             .map((r) => ({ engineId: r.engineId, analysis: r.analysis })),
         })),
       });
+      scanId = persisted.scanId;
+      dashboardToken = persisted.dashboardToken;
     } catch (err) {
       console.error("persistencia falló (el reporte sigue)", err);
     }
@@ -135,5 +145,6 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
     lostPrompts,
     failedJobs,
     scanId,
+    dashboardToken,
   };
 }

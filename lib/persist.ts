@@ -14,18 +14,22 @@ export type PersistScanArgs = {
   domain: string;
   verticalId: string;
   competitors: string[];
+  /** Resumen de score (0–1) para la tendencia del dashboard. */
+  score: { shareOfVoice: number; citationRate: number; invisibleRate: number };
   prompts: PersistPrompt[];
 };
 
-// Escribe un scan completo en Neon: upsert de user (lead), scan, prompts y
-// results. Devuelve el id del scan.
-export async function persistScan(args: PersistScanArgs): Promise<string> {
+export type PersistResult = { scanId: string; dashboardToken: string };
+
+// Escribe un scan completo en Neon: upsert de user (lead), scan (con score),
+// prompts y results. Devuelve el id del scan y el token de dashboard del user.
+export async function persistScan(args: PersistScanArgs): Promise<PersistResult> {
   // Lead: upsert por email (email es UNIQUE).
   const [user] = await db
     .insert(users)
     .values({ email: args.email })
     .onConflictDoUpdate({ target: users.email, set: { email: args.email } })
-    .returning({ id: users.id });
+    .returning({ id: users.id, dashboardToken: users.dashboardToken });
 
   const [scan] = await db
     .insert(scans)
@@ -35,10 +39,14 @@ export async function persistScan(args: PersistScanArgs): Promise<string> {
       verticalId: args.verticalId,
       competitors: args.competitors,
       status: "done",
+      shareOfVoice: args.score.shareOfVoice,
+      citationRate: args.score.citationRate,
+      invisibleRate: args.score.invisibleRate,
     })
     .returning({ id: scans.id });
 
-  if (args.prompts.length === 0) return scan.id;
+  const out: PersistResult = { scanId: scan.id, dashboardToken: user.dashboardToken };
+  if (args.prompts.length === 0) return out;
 
   // Prompts en batch; Postgres devuelve los ids en orden de inserción.
   const insertedPrompts = await db
@@ -66,5 +74,5 @@ export async function persistScan(args: PersistScanArgs): Promise<string> {
 
   if (resultRows.length > 0) await db.insert(results).values(resultRows);
 
-  return scan.id;
+  return out;
 }

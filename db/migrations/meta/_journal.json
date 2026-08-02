@@ -15,6 +15,13 @@
       "when": 1785681671182,
       "tag": "0001_living_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785690190793,
+      "tag": "0002_skinny_molecule_man",
+      "breakpoints": true
     }
   ]
 }
