@@ -12,7 +12,8 @@ import { prioritize, scorePriority } from "./prioritize";
 import { getExistingFixPack } from "./read";
 import type { FixItem, FixPack, Gap } from "./types";
 
-const MAX_GAPS = Number(process.env.FIXPACK_MAX_GAPS ?? 6);
+// Default 3 (no 6): la generación tiene que entrar en el maxDuration de Hobby.
+const MAX_GAPS = Number(process.env.FIXPACK_MAX_GAPS ?? 3);
 const GAP_CONCURRENCY = 3;
 
 // Extrae los gaps: prompts donde la marca no aparece en ninguna respuesta.

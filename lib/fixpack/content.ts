@@ -25,6 +25,8 @@ export async function generateContent(
     getAnthropic().messages.create({
       model: FIXPACK_MODEL,
       max_tokens: 8192,
+      // Sin thinking: la generación tiene que entrar en el maxDuration de Hobby.
+      thinking: { type: "disabled" },
       system:
         "You write citable content that AI engines quote: clear factual claims, " +
         "Q&A, and comparison tables. Output the body as Markdown. Make it " +

@@ -14,6 +14,8 @@ export async function diagnoseCause(
     getAnthropic().messages.create({
       model: FIXPACK_MODEL,
       max_tokens: 512,
+      // Sin thinking: la generación tiene que entrar en el maxDuration de Hobby.
+      thinking: { type: "disabled" },
       system:
         "You diagnose why a brand is absent from an AI engine's answer to a " +
         "buy-intent prompt. Name the single most likely cause in one or two " +
