@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { scans } from "@/db/schema";
 import { verifyWebhookSignature, type LemonWebhook } from "@/lib/billing/lemon";
-import { generateFixPack } from "@/lib/fixpack/generator";
+import { enqueueGeneration } from "@/lib/fixpack/queue";
 import { track } from "@/lib/analytics/events";
 
 // La generación del fix pack corre en after() (post-respuesta) para no bloquear
@@ -32,11 +32,11 @@ export async function POST(req: Request): Promise<Response> {
     // orderId permite resolver este scan desde el redirect post-pago de Lemon.
     await db.update(scans).set({ paid: true, orderId }).where(eq(scans.id, scanId));
     await track("paid", { scanId });
-    // Genera el fix pack post-respuesta (idempotente → los reintentos de Lemon
-    // no re-generan). El usuario, al volver, sólo lee la fila de la DB.
+    // Genera el fix pack post-respuesta: encola (cola configurada) o inline. En
+    // ambos casos idempotente. El usuario, al volver, sólo lee la fila de la DB.
     after(async () => {
       try {
-        await generateFixPack(scanId);
+        await enqueueGeneration(scanId);
       } catch (err) {
         console.error("generación post-pago falló", scanId, err);
       }
