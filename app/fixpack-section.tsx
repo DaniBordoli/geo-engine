@@ -36,7 +36,15 @@ function Item({ item, i }: { item: FixItem; i: number }) {
   );
 }
 
-function PaidView({ pack, report }: { pack: FixPack; report: ScanReport }) {
+export function PaidView({
+  pack,
+  domain,
+  brand,
+}: {
+  pack: FixPack;
+  domain: string;
+  brand: string;
+}) {
   return (
     <div className="animate-fade-in mt-12 w-full max-w-3xl">
       <div className="mb-4 flex items-center gap-3">
@@ -45,12 +53,12 @@ function PaidView({ pack, report }: { pack: FixPack; report: ScanReport }) {
         </h3>
         <button
           onClick={() => {
-            const blob = new Blob([fixPackToMarkdown(pack, report.domain)], {
+            const blob = new Blob([fixPackToMarkdown(pack, domain)], {
               type: "text/markdown",
             });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = `fixpack-${report.brand}.md`;
+            a.download = `fixpack-${brand}.md`;
             a.click();
           }}
           className="ml-auto rounded-lg border border-white/15 px-3 py-1.5 text-sm text-zinc-300 hover:border-white/30"
@@ -94,7 +102,7 @@ export function FixPackSection({ report, email }: { report: ScanReport; email: s
   if (!scanId) return null;
 
   if (state?.status === "ready") {
-    return <PaidView pack={state.pack} report={report} />;
+    return <PaidView pack={state.pack} domain={report.domain} brand={report.brand} />;
   }
 
   // Teaser dinámico: usa un prompt perdido real si lo hay (P2.3).

@@ -23,11 +23,13 @@ export async function POST(req: Request): Promise<Response> {
   const payload = JSON.parse(raw) as LemonWebhook;
   const event = payload.meta?.event_name;
   const scanId = payload.meta?.custom_data?.scan_id;
+  const orderId = payload.data?.id;
 
   if (!scanId) return new Response("no scan_id", { status: 200 });
 
   if (event === "order_created") {
-    await db.update(scans).set({ paid: true }).where(eq(scans.id, scanId));
+    // orderId permite resolver este scan desde el redirect post-pago de Lemon.
+    await db.update(scans).set({ paid: true, orderId }).where(eq(scans.id, scanId));
     // Genera el fix pack post-respuesta (idempotente → los reintentos de Lemon
     // no re-generan). El usuario, al volver, sólo lee la fila de la DB.
     after(async () => {

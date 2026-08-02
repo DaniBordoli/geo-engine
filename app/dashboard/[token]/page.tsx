@@ -78,9 +78,12 @@ export default async function DashboardPage({
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-lg font-medium text-zinc-100">{domain}</h2>
                 {latest.paid && (
-                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300">
-                    fix pack pago
-                  </span>
+                  <a
+                    href={`/fixpack/${latest.id}`}
+                    className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300 hover:border-emerald-400/60"
+                  >
+                    ver fix pack →
+                  </a>
                 )}
                 <div className="ml-auto">
                   <ReScanButton token={token} domain={domain} />
