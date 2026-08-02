@@ -17,6 +17,10 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   const invisible = report ? pct(report.score.invisibleRate) : "—";
   const top = report?.score.leaderboard[0]?.name;
   const domain = report?.domain ?? "geo-engine";
+  // Texto como string único: satori exige display:flex en divs con >1 hijo.
+  const invisibleLine = top
+    ? `Invisible en ${invisible} de los prompts · ${top} te gana`
+    : `Invisible en ${invisible} de los prompts de compra`;
 
   return new ImageResponse(
     (
@@ -54,9 +58,8 @@ export default async function Image({ params }: { params: Promise<{ token: strin
           </div>
         </div>
 
-        <div style={{ fontSize: 40, marginTop: 32, color: "#d4d4d8" }}>
-          Invisible en {invisible} de los prompts de compra
-          {top ? ` · ${top} te gana` : ""}
+        <div style={{ display: "flex", fontSize: 40, marginTop: 32, color: "#d4d4d8" }}>
+          {invisibleLine}
         </div>
       </div>
     ),
