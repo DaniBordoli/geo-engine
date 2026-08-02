@@ -12,7 +12,6 @@ import {
 
 // Data model mínimo — ver PROPOSAL.md § "Data model (mínimo)".
 
-export const planEnum = pgEnum("plan", ["free", "paid"]);
 export const scanStatusEnum = pgEnum("scan_status", [
   "pending",
   "running",
@@ -34,8 +33,6 @@ export const sentimentEnum = pgEnum("sentiment", [
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
-  /** LEGACY: el entitlement se movió a scans.paid (por-scan). No se usa. */
-  plan: planEnum("plan").notNull().default("free"),
   /** Token opaco para la URL del dashboard (no exponer email en la URL). */
   dashboardToken: uuid("dashboard_token").notNull().defaultRandom().unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

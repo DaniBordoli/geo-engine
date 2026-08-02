@@ -29,6 +29,13 @@
       "when": 1785694796128,
       "tag": "0003_cultured_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785696684177,
+      "tag": "0004_first_luckman",
+      "breakpoints": true
     }
   ]
 }
