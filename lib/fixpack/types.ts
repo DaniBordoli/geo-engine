@@ -24,3 +24,11 @@ export type FixPack = {
   items: FixItem[];
   generatedAt: string;
 };
+
+// Un gap = un prompt donde la marca pierde (no aparece / gana un competidor).
+export type Gap = {
+  prompt: string;
+  competitors: string[];
+  /** URLs que citaron los engines en ese prompt (lo que "tienen los que ganan"). */
+  winningUrls: string[];
+};

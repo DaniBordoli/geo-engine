@@ -46,6 +46,8 @@ export const scans = pgTable("scans", {
   competitors: text("competitors").array().notNull().default([]),
   verticalId: text("vertical_id").notNull(),
   status: scanStatusEnum("status").notNull().default("pending"),
+  /** Entitlement por-scan: el pago único desbloquea el fix pack de ESTE scan. */
+  paid: boolean("paid").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

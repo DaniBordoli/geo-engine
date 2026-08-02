@@ -1,0 +1,1 @@
+ALTER TABLE "scans" ADD COLUMN "paid" boolean DEFAULT false NOT NULL;
