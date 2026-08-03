@@ -19,11 +19,15 @@ export async function enqueueGeneration(scanId: string): Promise<void> {
   const token = process.env.QSTASH_TOKEN;
   const secret = process.env.FIXPACK_QUEUE_SECRET;
   const base = appUrl();
+  // El endpoint depende de la región de la cuenta (EU: qstash-eu-central-1…,
+  // US: qstash-us-east-1…). Se toma de QSTASH_URL (consola de Upstash); default
+  // al histórico global por compatibilidad.
+  const qstashUrl = (process.env.QSTASH_URL || "https://qstash.upstash.io").replace(/\/+$/, "");
 
   if (token && secret && base) {
     try {
       const res = await fetch(
-        `https://qstash.upstash.io/v2/publish/${base}/api/fixpack/generate`,
+        `${qstashUrl}/v2/publish/${base}/api/fixpack/generate`,
         {
           method: "POST",
           headers: {
