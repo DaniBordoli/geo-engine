@@ -24,7 +24,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is the result accurate?",
-    a: "It's a real, representative snapshot — not a universal guarantee. AI answers vary and change over time, so we measure a fixed set of questions so you can track your trend over time. More signal than any dashboard that just guesses.",
+    a: "It's a real, representative snapshot — not a universal guarantee. AI answers vary and shift over time, so treat it as a directional read of where you stand today, and re-run it to see how you're moving. More signal than any dashboard that just guesses.",
   },
   {
     q: "What do I get if I pay (the fix pack)?",
@@ -52,7 +52,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is my data safe?",
-    a: "We only read your public website and store your scan results. No account passwords, no private data, and analytics is cookieless.",
+    a: "We read your public website and store your scan results and the email you give us — that's it. We never ask for account passwords, and payments run through Lemon Squeezy (a merchant of record), so your card details never touch our servers. We use your email only to send you your report. Analytics is cookieless.",
   },
 ];
 
