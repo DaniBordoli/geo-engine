@@ -117,15 +117,17 @@ export function ScanFlow() {
       </div>
 
       <h1
-        className="animate-fade-up mt-6 text-5xl font-bold tracking-tight sm:text-6xl"
+        className="animate-fade-up mt-6 text-5xl font-bold tracking-tight text-zinc-50 sm:text-6xl"
         style={{ animationDelay: "80ms" }}
       >
-        <span className="bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent">
-          Is your store invisible to ChatGPT shoppers?
-        </span>
+        Is your store{" "}
+        <span className="bg-gradient-to-r from-violet-400 to-rose-400 bg-clip-text text-transparent">
+          invisible
+        </span>{" "}
+        to ChatGPT shoppers?
       </h1>
       <p
-        className="animate-fade-up mx-auto mt-4 max-w-lg text-lg text-zinc-400"
+        className="animate-fade-up mx-auto mt-5 max-w-lg text-lg leading-relaxed text-zinc-400"
         style={{ animationDelay: "150ms" }}
       >
         Shoppers don&apos;t Google anymore — they ask ChatGPT and Perplexity what to
@@ -140,7 +142,7 @@ export function ScanFlow() {
         {["ChatGPT", "Perplexity", "Gemini", "Claude"].map((e) => (
           <span
             key={e}
-            className="rounded-full border border-white/10 bg-white/[0.02] px-2.5 py-1 text-xs text-zinc-500"
+            className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs text-zinc-400"
           >
             {e}
           </span>
@@ -150,7 +152,7 @@ export function ScanFlow() {
       {step === "domain" && (
         <form
           onSubmit={submitDomain}
-          className="animate-fade-up mx-auto mt-8 flex max-w-md gap-2"
+          className="animate-fade-up mx-auto mt-8 flex max-w-md flex-col gap-2 sm:flex-row"
           style={{ animationDelay: "300ms" }}
         >
           <input
@@ -158,11 +160,11 @@ export function ScanFlow() {
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
             placeholder="yourbrand.com"
-            className="flex-1 rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-white/30"
+            className="flex-1 rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
           />
           <button
             type="submit"
-            className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white"
+            className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 transition hover:bg-white active:scale-[0.97]"
           >
             Scan free
           </button>
@@ -175,19 +177,19 @@ export function ScanFlow() {
             Drop your email to see the report for{" "}
             <span className="text-zinc-200">{domain}</span>.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               autoFocus
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@company.com"
-              className="flex-1 rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-white/30"
+              className="flex-1 rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
             />
             <button
               type="submit"
               disabled={pending}
-              className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white disabled:opacity-60"
+              className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 transition hover:bg-white active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100"
             >
               {pending ? "Scanning…" : "See report"}
             </button>

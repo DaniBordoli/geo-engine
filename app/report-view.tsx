@@ -43,6 +43,20 @@ export function ReportView({ report }: { report: ScanReport }) {
   const brandLow = score.shareOfVoice < 0.15;
   const topRival = score.leaderboard[0];
 
+  // Ranking real de la marca entre las nombradas por la IA (para el golpe de "puesto").
+  const brandsAhead = score.leaderboard.filter(
+    (c) => c.shareOfVoice > score.shareOfVoice,
+  ).length;
+  const rank = brandsAhead + 1;
+  const totalBrands = score.leaderboard.length + 1;
+
+  // Leaderboard con TU propia barra (en rojo) intercalada en su puesto real: se ve
+  // el abismo, no solo a los que ganan.
+  const ranked = [
+    ...score.leaderboard.map((c) => ({ name: c.name, sov: c.shareOfVoice, you: false })),
+    { name: "You", sov: score.shareOfVoice, you: true },
+  ].sort((a, b) => b.sov - a.sov);
+
   return (
     <div className="w-full max-w-3xl">
       {/* Encabezado */}
@@ -61,7 +75,7 @@ export function ReportView({ report }: { report: ScanReport }) {
         </span>
       </div>
 
-      {/* El cachetazo */}
+      {/* El cachetazo — dos golpes: share-of-voice gigante + invisibilidad visceral */}
       <div className="animate-fade-up rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-8">
         <div className="text-sm text-zinc-400">Your share-of-voice in AI answers</div>
         <div
@@ -71,26 +85,53 @@ export function ReportView({ report }: { report: ScanReport }) {
         >
           <CountUp value={score.shareOfVoice} durationMs={1100} format={pctText} />
         </div>
-        <p className="mt-3 max-w-xl text-zinc-400">
-          You&apos;re{" "}
-          <span className="font-semibold text-zinc-200">
-            invisible in {pct(score.invisibleRate)}
-          </span>{" "}
-          of buying questions.{" "}
+
+        {/* Golpe #2 */}
+        <div
+          className="animate-fade-up mt-6 border-t border-white/10 pt-6"
+          style={{ animationDelay: "260ms" }}
+        >
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-6xl font-bold tabular-nums text-red-400">
+              <CountUp value={score.invisibleRate} durationMs={1100} format={pctText} />
+            </span>
+            <span className="text-lg text-zinc-300">
+              of buying questions never mention you
+            </span>
+          </div>
           {topRival && (
-            <>
-              <span className="font-semibold text-zinc-200">{topRival.name}</span> is beating
-              you with {pct(topRival.shareOfVoice)} share-of-voice.
-            </>
+            <p className="mt-3 text-zinc-400">
+              <span className="font-semibold text-zinc-200">{topRival.name}</span> is
+              winning them with {pct(topRival.shareOfVoice)} share-of-voice.
+            </p>
           )}
-        </p>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Share of voice" value={score.shareOfVoice} tone={brandLow ? "bad" : "neutral"} delay={120} />
-        <StatCard label="Citation rate" value={score.citationRate} hint="questions that cite you as a source" delay={200} />
-        <StatCard label="Invisible" value={score.invisibleRate} tone={score.invisibleRate > 0.5 ? "bad" : "neutral"} hint="questions where you don't appear" delay={280} />
+      {/* Stats de soporte (sin repetir SoV/invisible del hero) */}
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard
+          label="Citation rate"
+          value={score.citationRate}
+          hint="questions that cite you as a source"
+          delay={200}
+        />
+        <div
+          className="animate-fade-up rounded-xl border border-white/10 bg-white/[0.03] p-5"
+          style={{ animationDelay: "280ms" }}
+        >
+          <div className="text-xs uppercase tracking-wide text-zinc-500">Your rank</div>
+          <div
+            className={`mt-2 text-4xl font-semibold tabular-nums ${
+              rank > 3 ? "text-red-400" : "text-zinc-100"
+            }`}
+          >
+            #{rank}
+          </div>
+          <div className="mt-1 text-sm text-zinc-500">
+            of {totalBrands} brands named by AI
+          </div>
+        </div>
       </div>
 
       {/* Leaderboard */}
@@ -100,19 +141,31 @@ export function ReportView({ report }: { report: ScanReport }) {
             Who&apos;s beating you
           </h3>
           <div className="space-y-2">
-            {score.leaderboard.map((c, i) => {
-              const w = Math.max(2, Math.round(c.shareOfVoice * 100));
+            {ranked.map((c, i) => {
+              const w = Math.max(2, Math.round(c.sov * 100));
               return (
-                <div key={c.name} className="flex items-center gap-3">
-                  <div className="w-28 shrink-0 truncate text-sm text-zinc-300">{c.name}</div>
+                <div key={`${c.name}-${i}`} className="flex items-center gap-3">
+                  <div
+                    className={`w-28 shrink-0 truncate text-sm ${
+                      c.you ? "font-semibold text-red-400" : "text-zinc-300"
+                    }`}
+                  >
+                    {c.name}
+                  </div>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
                     <div
-                      className="bar-grow h-full rounded-full bg-zinc-400"
-                      style={{ width: mounted ? `${w}%` : "0%", transitionDelay: `${350 + i * 70}ms` }}
+                      className={`bar-grow h-full rounded-full ${
+                        c.you ? "bg-red-400" : "bg-zinc-400"
+                      }`}
+                      style={{ width: mounted ? `${w}%` : "0%", transitionDelay: `${350 + i * 60}ms` }}
                     />
                   </div>
-                  <div className="w-12 shrink-0 text-right text-sm tabular-nums text-zinc-400">
-                    {pct(c.shareOfVoice)}
+                  <div
+                    className={`w-12 shrink-0 text-right text-sm tabular-nums ${
+                      c.you ? "font-semibold text-red-400" : "text-zinc-400"
+                    }`}
+                  >
+                    {pct(c.sov)}
                   </div>
                 </div>
               );
