@@ -27,12 +27,12 @@ export default async function PublicReportPage({
       <ReportView report={report} />
 
       <div className="mt-14 text-center">
-        <p className="text-zinc-400">¿Querés ver cómo te ve la IA a vos?</p>
+        <p className="text-zinc-400">Want to see how AI sees your store?</p>
         <a
           href="/"
           className="mt-3 inline-block rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white"
         >
-          Escaneá tu tienda gratis
+          Scan your store — free
         </a>
       </div>
     </main>

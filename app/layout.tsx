@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "geo-engine — visibilidad en IA",
+  title: "geo-engine — AI visibility for your store",
   description:
-    "Escaneá la visibilidad de tu marca en respuestas de IA y descubrí quién te está ganando.",
+    "Shoppers ask ChatGPT what to buy. See if it recommends your brand — or your competitor. Free AI-visibility scan.",
 };
 
 export default function RootLayout({

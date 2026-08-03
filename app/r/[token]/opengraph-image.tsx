@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getReportByToken } from "@/lib/report-read";
 
-export const alt = "Tu visibilidad en respuestas de IA";
+export const alt = "Your visibility in AI answers";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -19,8 +19,8 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   const domain = report?.domain ?? "geo-engine";
   // Texto como string único: satori exige display:flex en divs con >1 hijo.
   const invisibleLine = top
-    ? `Invisible en ${invisible} de los prompts · ${top} te gana`
-    : `Invisible en ${invisible} de los prompts de compra`;
+    ? `Invisible in ${invisible} of questions · ${top} wins instead`
+    : `Invisible in ${invisible} of buying questions`;
 
   return new ImageResponse(
     (
@@ -38,13 +38,13 @@ export default async function Image({ params }: { params: Promise<{ token: strin
         }}
       >
         <div style={{ fontSize: 30, color: "#a1a1aa" }}>
-          geo-engine · visibilidad en IA
+          geo-engine · AI visibility
         </div>
         <div style={{ fontSize: 40, marginTop: 8, color: "#e4e4e7" }}>{domain}</div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: 40 }}>
           <div style={{ fontSize: 32, color: "#a1a1aa" }}>
-            Share-of-voice en respuestas de IA
+            Share-of-voice in AI answers
           </div>
           <div
             style={{

@@ -23,12 +23,12 @@ function ShareReportButton({ token }: { token: string }) {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         } catch {
-          window.prompt("Copiá tu link:", url);
+          window.prompt("Copy your link:", url);
         }
       }}
       className="mt-10 rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-200 hover:border-white/30"
     >
-      {copied ? "¡Link copiado!" : "🔗 Compartí tu resultado"}
+      {copied ? "Link copied!" : "🔗 Share your result"}
     </button>
   );
 }
@@ -85,7 +85,7 @@ export function ScanFlow() {
             href={`/dashboard/${report.dashboardToken}`}
             className="mt-6 text-sm text-emerald-400 hover:text-emerald-300"
           >
-            Ver tu dashboard (historial + tendencia) →
+            See your dashboard (history + trend) →
           </a>
         )}
         <button
@@ -97,7 +97,7 @@ export function ScanFlow() {
           }}
           className="mt-4 text-sm text-zinc-500 hover:text-zinc-300"
         >
-          ← escanear otro dominio
+          ← scan another store
         </button>
       </div>
     );
@@ -113,7 +113,7 @@ export function ScanFlow() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
         </span>
-        Diagnóstico gratis · ~60 segundos
+        Free scan · ~60 seconds
       </div>
 
       <h1
@@ -121,15 +121,16 @@ export function ScanFlow() {
         style={{ animationDelay: "80ms" }}
       >
         <span className="bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent">
-          ¿Te ve la IA?
+          Is your store invisible to ChatGPT shoppers?
         </span>
       </h1>
       <p
-        className="animate-fade-up mx-auto mt-4 max-w-md text-lg text-zinc-400"
+        className="animate-fade-up mx-auto mt-4 max-w-lg text-lg text-zinc-400"
         style={{ animationDelay: "150ms" }}
       >
-        Escaneá tu visibilidad en respuestas de IA y descubrí quién te está
-        ganando las citaciones.
+        Shoppers don&apos;t Google anymore — they ask ChatGPT and Perplexity what to
+        buy. We show you exactly which questions you&apos;re invisible for, who&apos;s
+        winning instead, and how to get recommended.
       </p>
 
       <div
@@ -156,14 +157,14 @@ export function ScanFlow() {
             autoFocus
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
-            placeholder="tumarca.com"
+            placeholder="yourbrand.com"
             className="flex-1 rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-white/30"
           />
           <button
             type="submit"
             className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white"
           >
-            Escanear
+            Scan free
           </button>
         </form>
       )}
@@ -171,7 +172,7 @@ export function ScanFlow() {
       {step === "email" && (
         <form onSubmit={submitEmail} className="animate-fade-in mx-auto mt-8 max-w-md">
           <p className="mb-3 text-sm text-zinc-400">
-            Dejá tu email para ver el reporte de{" "}
+            Drop your email to see the report for{" "}
             <span className="text-zinc-200">{domain}</span>.
           </p>
           <div className="flex gap-2">
@@ -180,7 +181,7 @@ export function ScanFlow() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="vos@empresa.com"
+              placeholder="you@company.com"
               className="flex-1 rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-zinc-100 placeholder-zinc-600 outline-none focus:border-white/30"
             />
             <button
@@ -188,7 +189,7 @@ export function ScanFlow() {
               disabled={pending}
               className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white disabled:opacity-60"
             >
-              {pending ? "Escaneando…" : "Ver reporte"}
+              {pending ? "Scanning…" : "See report"}
             </button>
           </div>
           {error && <p className="mt-3 text-sm text-red-400">{error}</p>}

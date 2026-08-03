@@ -53,7 +53,7 @@ export function ReportView({ report }: { report: ScanReport }) {
         <h2 className="text-lg font-medium text-zinc-200">{report.domain}</h2>
         {report.mock && (
           <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-xs text-amber-300">
-            datos simulados (sin API keys)
+            simulated data (no API keys)
           </span>
         )}
         <span className="ml-auto text-xs text-zinc-500">
@@ -63,7 +63,7 @@ export function ReportView({ report }: { report: ScanReport }) {
 
       {/* El cachetazo */}
       <div className="animate-fade-up rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-8">
-        <div className="text-sm text-zinc-400">Tu share-of-voice en respuestas de IA</div>
+        <div className="text-sm text-zinc-400">Your share-of-voice in AI answers</div>
         <div
           className={`mt-1 text-7xl font-bold tabular-nums ${
             brandLow ? "text-red-400" : "text-emerald-400"
@@ -72,15 +72,15 @@ export function ReportView({ report }: { report: ScanReport }) {
           <CountUp value={score.shareOfVoice} durationMs={1100} format={pctText} />
         </div>
         <p className="mt-3 max-w-xl text-zinc-400">
-          Sos{" "}
+          You&apos;re{" "}
           <span className="font-semibold text-zinc-200">
-            invisible en {pct(score.invisibleRate)}
+            invisible in {pct(score.invisibleRate)}
           </span>{" "}
-          de los prompts de compra.{" "}
+          of buying questions.{" "}
           {topRival && (
             <>
-              <span className="font-semibold text-zinc-200">{topRival.name}</span> te está
-              ganando con {pct(topRival.shareOfVoice)} de share-of-voice.
+              <span className="font-semibold text-zinc-200">{topRival.name}</span> is beating
+              you with {pct(topRival.shareOfVoice)} share-of-voice.
             </>
           )}
         </p>
@@ -89,15 +89,15 @@ export function ReportView({ report }: { report: ScanReport }) {
       {/* Stats */}
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Share of voice" value={score.shareOfVoice} tone={brandLow ? "bad" : "neutral"} delay={120} />
-        <StatCard label="Tasa de citación" value={score.citationRate} hint="prompts que te citan como fuente" delay={200} />
-        <StatCard label="Invisible" value={score.invisibleRate} tone={score.invisibleRate > 0.5 ? "bad" : "neutral"} hint="prompts donde no aparecés" delay={280} />
+        <StatCard label="Citation rate" value={score.citationRate} hint="questions that cite you as a source" delay={200} />
+        <StatCard label="Invisible" value={score.invisibleRate} tone={score.invisibleRate > 0.5 ? "bad" : "neutral"} hint="questions where you don't appear" delay={280} />
       </div>
 
       {/* Leaderboard */}
       {score.leaderboard.length > 0 && (
         <div className="animate-fade-up mt-8" style={{ animationDelay: "320ms" }}>
           <h3 className="mb-3 text-sm uppercase tracking-wide text-zinc-500">
-            Quién te está ganando
+            Who&apos;s beating you
           </h3>
           <div className="space-y-2">
             {score.leaderboard.map((c, i) => {
@@ -125,7 +125,7 @@ export function ReportView({ report }: { report: ScanReport }) {
       {report.lostPrompts.length > 0 && (
         <div className="animate-fade-up mt-8" style={{ animationDelay: "400ms" }}>
           <h3 className="mb-3 text-sm uppercase tracking-wide text-zinc-500">
-            Prompts donde sos invisible
+            Questions where you&apos;re invisible
           </h3>
           <ul className="space-y-2">
             {report.lostPrompts.map((p, i) => (
