@@ -9,6 +9,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export type ScanActionInput = {
   domain: string;
   email: string;
+  /** Overrides opcionales de la detección de vertical (Auto por default). */
+  lang?: string;
+  category?: string;
   attribution?: Attribution;
 };
 export type ScanActionResult =
@@ -19,18 +22,24 @@ export async function runScanAction(input: ScanActionInput): Promise<ScanActionR
   const domain = input.domain?.trim();
   const email = input.email?.trim();
 
-  if (!domain) return { ok: false, error: "Ingresá un dominio." };
-  if (!EMAIL_RE.test(email ?? "")) return { ok: false, error: "Email inválido." };
+  if (!domain) return { ok: false, error: "Enter a domain." };
+  if (!EMAIL_RE.test(email ?? "")) return { ok: false, error: "Invalid email." };
 
   try {
     // El scan persiste lead + scan + prompts + results si hay DATABASE_URL.
-    const report = await runScan({ domain, email, attribution: input.attribution });
+    const report = await runScan({
+      domain,
+      email,
+      lang: input.lang,
+      category: input.category,
+      attribution: input.attribution,
+    });
     // Funnel: scan_started linkeado al scan + su atribución.
     await track("scan_started", { scanId: report.scanId, attribution: input.attribution });
     return { ok: true, report };
   } catch (err) {
     console.error("scan failed", err);
-    return { ok: false, error: "El scan falló. Reintentá en un momento." };
+    return { ok: false, error: "The scan failed. Try again in a moment." };
   }
 }
 

@@ -37,6 +37,10 @@ export function ScanFlow() {
   const [step, setStep] = useState<Step>("domain");
   const [domain, setDomain] = useState("");
   const [email, setEmail] = useState("");
+  // Overrides opcionales de la detección de vertical (Auto por default).
+  const [market, setMarket] = useState<"auto" | "en" | "es">("auto");
+  const [category, setCategory] = useState("");
+  const [showOpts, setShowOpts] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<ScanReport | null>(null);
   const [pending, startTransition] = useTransition();
@@ -63,7 +67,13 @@ export function ScanFlow() {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await runScanAction({ domain, email, attribution: attribution.current });
+      const res = await runScanAction({
+        domain,
+        email,
+        lang: market === "auto" ? undefined : market,
+        category: category.trim() || undefined,
+        attribution: attribution.current,
+      });
       if (res.ok) {
         analytics("Scan");
         setReport(res.report);
@@ -169,6 +179,40 @@ export function ScanFlow() {
             Scan free
           </button>
         </form>
+      )}
+
+      {step === "domain" && (
+        <div
+          className="animate-fade-up mx-auto mt-3 max-w-md text-left"
+          style={{ animationDelay: "360ms" }}
+        >
+          <button
+            type="button"
+            onClick={() => setShowOpts((s) => !s)}
+            className="mx-auto block text-xs text-zinc-500 transition hover:text-zinc-300"
+          >
+            {showOpts ? "Auto-detecting market & category ▲" : "Auto-detecting market & category · customize ▾"}
+          </button>
+          {showOpts && (
+            <div className="animate-fade-in mt-3 flex flex-col gap-2 sm:flex-row">
+              <select
+                value={market}
+                onChange={(e) => setMarket(e.target.value as "auto" | "en" | "es")}
+                className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-zinc-200 outline-none transition focus:border-violet-400/50"
+              >
+                <option value="auto">Language: Auto</option>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+              </select>
+              <input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Category (optional, e.g. specialty coffee)"
+                className="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 outline-none transition focus:border-violet-400/50"
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {step === "email" && (

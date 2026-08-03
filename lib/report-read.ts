@@ -11,7 +11,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // subconjunto de ScanReport que consume report-view (el "cachetazo").
 export type ReportSnapshot = Pick<
   ScanReport,
-  "mock" | "promptCount" | "engineIds" | "score" | "lostPrompts" | "failedJobs"
+  | "mock"
+  | "promptCount"
+  | "engineIds"
+  | "score"
+  | "lostPrompts"
+  | "failedJobs"
+  | "category"
+  | "lang"
 >;
 
 // Reporte público read-only por token opaco (/r/[token]). Null si no existe o
@@ -32,6 +39,8 @@ export async function getReportByToken(token: string): Promise<ScanReport | null
     score: snap.score,
     lostPrompts: snap.lostPrompts,
     failedJobs: snap.failedJobs,
+    category: snap.category,
+    lang: snap.lang,
     // Nota: NO exponer scanId acá (es el id del fix pack; el reporte público usa
     // reportToken justamente para no filtrarlo).
   };

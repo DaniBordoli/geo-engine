@@ -6,6 +6,17 @@ import { CountUp, useMounted } from "./motion";
 const pctText = (n: number) => `${Math.round(n * 100)}%`;
 const pct = (x: number) => pctText(x);
 
+const LANG_NAMES: Record<string, string> = {
+  en: "English",
+  es: "Spanish",
+  pt: "Portuguese",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+};
+const langName = (code?: string) =>
+  code ? (LANG_NAMES[code.toLowerCase()] ?? code) : undefined;
+
 function StatCard({
   label,
   value,
@@ -74,6 +85,16 @@ export function ReportView({ report }: { report: ScanReport }) {
           {report.promptCount} prompts · {report.engineIds.join(" + ")}
         </span>
       </div>
+
+      {report.category && (
+        <p
+          className="animate-fade-up -mt-3 mb-6 text-sm text-zinc-500"
+          style={{ animationDelay: "60ms" }}
+        >
+          We asked {report.promptCount} {report.category} questions
+          {langName(report.lang) ? ` in ${langName(report.lang)}` : ""}.
+        </p>
+      )}
 
       {/* El cachetazo — dos golpes: share-of-voice gigante + invisibilidad visceral */}
       <div className="animate-fade-up rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-8">

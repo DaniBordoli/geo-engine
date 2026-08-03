@@ -3,9 +3,10 @@
 // Ver PROPOSAL.md § "Config de vertical (contrato)".
 
 export type VerticalConfig = {
-  /** "ecommerce" | "latam" | "saas" */
+  /** "ecommerce" | "latam" | "saas" | "auto" */
   id: string;
-  lang: "en" | "es";
+  /** ISO code del idioma de los prompts: "en" | "es" | "pt" | … */
+  lang: string;
   /** Descriptor de categoría para el generador de prompts. */
   category: string;
   /** Descriptor del comprador (ICP). */

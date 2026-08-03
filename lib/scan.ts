@@ -6,8 +6,7 @@ import { scoreScan } from "@/lib/scoring";
 import type { ScanScore } from "@/lib/scoring/types";
 import { mapLimit } from "@/lib/util/async";
 import { withRetry } from "@/lib/util/retry";
-import { getVertical } from "@/lib/verticals";
-import { ecommerce } from "@/lib/verticals/ecommerce";
+import { resolveVertical } from "@/lib/verticals/resolve";
 
 // Free tier acotado (P2.1): ~40 prompts × engines dentro de un server action
 // puede pasarse del timeout serverless. Configurable por env.
@@ -27,6 +26,9 @@ export type ScanInput = {
   verticalId?: string;
   /** Override del nombre de marca cuando difiere del dominio (ej: hellobubble.com → "Bubble"). */
   brand?: string;
+  /** Overrides de la UI para la detección de vertical (Auto por default). */
+  lang?: string;
+  category?: string;
   attribution?: Attribution;
 };
 
@@ -51,6 +53,10 @@ export type ScanReport = {
   dashboardToken?: string;
   /** Token del reporte público compartible /r/[token] (si se persistió). */
   reportToken?: string;
+  /** Rubro medido (para "We asked N {category} questions in {lang}"). */
+  category?: string;
+  /** Idioma en el que se generaron los prompts (ISO). */
+  lang?: string;
 };
 
 // Deriva el token de marca desde el dominio: "https://www.nike.com/x" → "nike".
@@ -68,7 +74,12 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
   // Override explícito (marca ≠ dominio) o token derivado del dominio. Nota: la
   // citación (hostMatchesBrand) usa este mismo valor, correcto para el caso normal.
   const brand = input.brand?.trim() || brandFromDomain(input.domain);
-  const vertical = (input.verticalId && getVertical(input.verticalId)) || ecommerce;
+  // Vertical: estático por verticalId (modo teardown) o dinámico (crawl + detección).
+  const vertical = await resolveVertical(input.domain, {
+    verticalId: input.verticalId,
+    lang: input.lang,
+    category: input.category,
+  });
 
   const generator = getPromptGenerator();
   const analyzer = getAnalyzer();
@@ -141,6 +152,8 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
           score,
           lostPrompts,
           failedJobs,
+          category: vertical.category,
+          lang: vertical.lang,
         },
         attribution: input.attribution,
         prompts: prompts.map((p, pi) => ({
@@ -172,5 +185,7 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
     scanId,
     dashboardToken,
     reportToken,
+    category: vertical.category,
+    lang: vertical.lang,
   };
 }
