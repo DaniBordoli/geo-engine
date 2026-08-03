@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getFixPackState, trackCheckoutClick, type FixPackState } from "./fixpack-actions";
+import {
+  getFixPackState,
+  trackCheckoutClick,
+  regenerateFixPack,
+  type FixPackState,
+} from "./fixpack-actions";
 import type { ScanReport } from "@/lib/scan";
 import type { FixItem, FixPack } from "@/lib/fixpack/types";
 import { fixPackToMarkdown } from "@/lib/fixpack/markdown";
@@ -76,10 +81,16 @@ export function PaidView({
   );
 }
 
+// ~3 min de "generating" (45 × 4s) antes de cortar el polling y mostrar fallback.
+const MAX_POLLS = 45;
+const POLL_MS = 4000;
+
 export function FixPackSection({ report, email }: { report: ScanReport; email: string }) {
   const scanId = report.scanId;
   const [state, setState] = useState<FixPackState | null>(null);
+  const [tookTooLong, setTookTooLong] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollCount = useRef(0);
 
   const refresh = useCallback(async () => {
     if (!scanId) return;
@@ -91,16 +102,31 @@ export function FixPackSection({ report, email }: { report: ScanReport; email: s
     refresh();
   }, [refresh]);
 
-  // Poll mientras se genera (post-pago); no pollea en locked.
+  // Poll mientras se genera (post-pago); no pollea en locked. Tope duro para no
+  // girar infinito si la generación se cortó (F1.b): a los N intentos → fallback.
   useEffect(() => {
-    if (state?.status !== "generating") return;
-    pollRef.current = setTimeout(refresh, 4000);
+    if (state?.status !== "generating" || tookTooLong) return;
+    if (pollCount.current >= MAX_POLLS) {
+      setTookTooLong(true);
+      return;
+    }
+    pollRef.current = setTimeout(() => {
+      pollCount.current += 1;
+      refresh();
+    }, POLL_MS);
     return () => {
       if (pollRef.current) clearTimeout(pollRef.current);
     };
-  }, [state, refresh]);
+  }, [state, refresh, tookTooLong]);
 
   if (!scanId) return null;
+
+  // Retry (F1.c): resetea el contador y re-dispara la generación (idempotente).
+  const retryGeneration = () => {
+    pollCount.current = 0;
+    setTookTooLong(false);
+    void regenerateFixPack(scanId).then(refresh);
+  };
 
   if (state?.status === "ready") {
     return <PaidView pack={state.pack} domain={report.domain} brand={report.brand} />;
@@ -147,10 +173,25 @@ export function FixPackSection({ report, email }: { report: ScanReport; email: s
         </div>
 
         {state?.status === "generating" ? (
-          <div className="mt-6 flex items-center gap-3 text-zinc-300">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
-            Your payment is confirmed. We&apos;re generating your fix pack…
-          </div>
+          tookTooLong ? (
+            <div className="mt-6">
+              <p className="text-zinc-300">
+                This is taking longer than expected — we&apos;ll email you the fix pack
+                when it&apos;s ready.
+              </p>
+              <button
+                onClick={retryGeneration}
+                className="mt-3 rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-200 transition hover:border-white/30 active:scale-[0.97]"
+              >
+                Retry now
+              </button>
+            </div>
+          ) : (
+            <div className="mt-6 flex items-center gap-3 text-zinc-300">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+              Your payment is confirmed. We&apos;re generating your fix pack…
+            </div>
+          )
         ) : (
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <button

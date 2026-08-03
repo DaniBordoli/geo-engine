@@ -7,6 +7,7 @@ import type { ScanScore } from "@/lib/scoring/types";
 import { mapLimit } from "@/lib/util/async";
 import { withRetry } from "@/lib/util/retry";
 import { resolveVertical } from "@/lib/verticals/resolve";
+import { appBaseUrl } from "@/lib/app-url";
 
 // Free tier acotado (P2.1): ~40 prompts × engines dentro de un server action
 // puede pasarse del timeout serverless. Configurable por env.
@@ -167,6 +168,16 @@ export async function runScan(input: ScanInput): Promise<ScanReport> {
       scanId = persisted.scanId;
       dashboardToken = persisted.dashboardToken;
       reportToken = persisted.reportToken;
+
+      // Mail "tu reporte está listo" (best-effort; no-op sin RESEND_API_KEY).
+      const base = appBaseUrl();
+      if (reportToken && base) {
+        const { sendReportReadyEmail } = await import("@/lib/email/send");
+        await sendReportReadyEmail(input.email, {
+          domain: input.domain,
+          reportUrl: `${base}/r/${reportToken}`,
+        });
+      }
     } catch (err) {
       console.error("persistencia falló (el reporte sigue)", err);
     }

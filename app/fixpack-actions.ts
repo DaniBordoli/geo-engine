@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { scans } from "@/db/schema";
 import { buildCheckoutUrl } from "@/lib/billing/lemon";
 import { getExistingFixPack } from "@/lib/fixpack/read";
+import { enqueueGeneration } from "@/lib/fixpack/queue";
 import type { FixPack } from "@/lib/fixpack/types";
 import { track } from "@/lib/analytics/events";
 
@@ -33,6 +34,19 @@ export async function getFixPackState(
 // Funnel: lo dispara el botón "Desbloquear" al abrir el checkout (client).
 export async function trackCheckoutClick(scanId: string): Promise<void> {
   await track("checkout_clicked", { scanId });
+}
+
+// Recovery (F1.c): re-dispara la generación si el fix pack quedó colgado (una
+// generación inline en el webhook pudo cortarse por timeout). Idempotente: si ya
+// existe no regenera. Lo llama el botón de retry tras el tope de polling.
+export async function regenerateFixPack(scanId: string): Promise<{ ok: boolean }> {
+  try {
+    await enqueueGeneration(scanId);
+    return { ok: true };
+  } catch (err) {
+    console.error("regenerateFixPack falló", scanId, err);
+    return { ok: false };
+  }
 }
 
 // Resuelve el scan pagado desde el id de orden de Lemon (lo persiste el webhook

@@ -1,6 +1,9 @@
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { fixpacks } from "@/db/schema";
+import { fixpacks, scans, users } from "@/db/schema";
 import { getScanData } from "@/lib/scan-read";
+import { appBaseUrl } from "@/lib/app-url";
+import { sendFixPackReadyEmail } from "@/lib/email/send";
 import { mapLimit } from "@/lib/util/async";
 import { getVertical } from "@/lib/verticals";
 import { ecommerce } from "@/lib/verticals/ecommerce";
@@ -97,5 +100,27 @@ export async function generateFixPack(scanId: string): Promise<FixPack> {
   // onConflictDoNothing + re-lectura: si una generación concurrente ganó la
   // carrera (unique en scan_id), devolvemos la persistida, no la nuestra.
   await db.insert(fixpacks).values({ scanId, items }).onConflictDoNothing();
+
+  // Mail "tu fix pack está listo" (best-effort; no-op sin RESEND_API_KEY). Cubre
+  // el caso async: aunque la generación haya tardado, al comprador le llega el link.
+  try {
+    const base = appBaseUrl();
+    if (base) {
+      const [row] = await db
+        .select({ email: users.email })
+        .from(scans)
+        .innerJoin(users, eq(users.id, scans.userId))
+        .where(eq(scans.id, scanId));
+      if (row?.email) {
+        await sendFixPackReadyEmail(row.email, {
+          domain: scan.domain,
+          fixpackUrl: `${base}/fixpack/${scanId}`,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("email fix pack listo falló (no rompe)", err);
+  }
+
   return (await getExistingFixPack(scanId)) ?? pack;
 }

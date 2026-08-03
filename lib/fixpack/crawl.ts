@@ -5,7 +5,10 @@
 //
 // Fallback headless (detrás de ENABLE_HEADLESS_CRAWL): para shells 100% vacíos
 // (SPAs sin meta ni JSON-LD), renderiza con chromium para leer el DOM ya montado.
-export async function fetchSiteText(domain: string): Promise<string> {
+export async function fetchSiteText(
+  domain: string,
+  opts?: { headless?: boolean },
+): Promise<string> {
   const url = /^https?:\/\//.test(domain) ? domain : `https://${domain}`;
 
   let result = "";
@@ -38,9 +41,11 @@ export async function fetchSiteText(domain: string): Promise<string> {
     result = "";
   }
 
-  // Shell pobre (SPA vacío) + headless habilitado → renderizar el DOM montado.
+  // Shell pobre (SPA vacío) + headless pedido EXPLÍCITAMENTE + flag → render del DOM.
+  // Opt-in por llamada a propósito: el headless nunca corre en los hot paths de 60s
+  // (scan y generación del fix pack) — solo si un caller fuera de banda lo pide.
   const THIN = 300;
-  if (result.length < THIN && process.env.ENABLE_HEADLESS_CRAWL) {
+  if (result.length < THIN && opts?.headless === true && process.env.ENABLE_HEADLESS_CRAWL) {
     const rendered = await renderWithBrowser(url);
     if (rendered.length > result.length) {
       return `${result ? result + "\n\n" : ""}Rendered page text: ${rendered}`.slice(0, 5000);
