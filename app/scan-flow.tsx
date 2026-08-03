@@ -6,6 +6,7 @@ import { analytics } from "@/lib/analytics/client";
 import type { Attribution, ScanReport } from "@/lib/scan";
 import { ReportView } from "./report-view";
 import { FixPackSection } from "./fixpack-section";
+import { ScanningScreen } from "./scanning-screen";
 
 type Step = "domain" | "email" | "report";
 
@@ -82,6 +83,15 @@ export function ScanFlow() {
         setError(res.error);
       }
     });
+  }
+
+  // Mientras corre el scan real (~30-40s): pantalla de anticipación (D1).
+  if (pending) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center py-8">
+        <ScanningScreen domain={domain} />
+      </div>
+    );
   }
 
   if (step === "report" && report) {

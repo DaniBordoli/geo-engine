@@ -69,7 +69,7 @@ body {
   z-index: -1;
   pointer-events: none;
   filter: blur(90px);
-  opacity: 0.5;
+  opacity: 0.62;
 }
 .aurora::before,
 .aurora::after {
@@ -99,11 +99,40 @@ body {
   transition: width 0.9s cubic-bezier(0.22, 0.7, 0.2, 1);
 }
 
+/* Shimmer de la barra de progreso del scanning (recorre de izq a der). */
+@keyframes scan-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+.scan-shimmer {
+  animation: scan-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Pulso sutil para el "invisible %" del reporte (D3). */
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+.soft-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-in,
   .aurora::before,
-  .aurora::after {
+  .aurora::after,
+  .scan-shimmer,
+  .soft-pulse {
     animation: none !important;
   }
   .bar-grow {

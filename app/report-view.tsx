@@ -113,7 +113,7 @@ export function ReportView({ report }: { report: ScanReport }) {
           style={{ animationDelay: "260ms" }}
         >
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-6xl font-bold tabular-nums text-red-400">
+            <span className="soft-pulse text-6xl font-bold tabular-nums text-red-400">
               <CountUp value={score.invisibleRate} durationMs={1100} format={pctText} />
             </span>
             <span className="text-lg text-zinc-300">
