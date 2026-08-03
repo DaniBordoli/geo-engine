@@ -64,24 +64,24 @@ export function FixPackView({
         <div className="mt-6 flex items-center gap-3 text-zinc-300">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
           {state?.status === "generating"
-            ? "Tu pago se confirmó. Estamos generando tu fix pack…"
+            ? "Your payment is confirmed. We're generating your fix pack…"
             : confirmingPayment
-              ? "Confirmando tu pago…"
-              : "Cargando…"}
+              ? "Confirming your payment…"
+              : "Loading…"}
         </div>
       )}
 
       {state?.status === "locked" && !confirmingPayment && (
         <div className="mt-6">
           <p className="text-zinc-400">
-            Este fix pack todavía no está desbloqueado.
+            This fix pack isn&apos;t unlocked yet.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <a
               href={state.checkoutUrl}
               className="rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white"
             >
-              Desbloquear fix pack — US$49
+              Unlock fix pack — US$49
             </a>
             <button
               onClick={() => {
@@ -90,7 +90,7 @@ export function FixPackView({
               }}
               className="text-sm text-zinc-500 hover:text-zinc-300"
             >
-              Ya pagué → actualizar
+              Already paid → refresh
             </button>
           </div>
         </div>

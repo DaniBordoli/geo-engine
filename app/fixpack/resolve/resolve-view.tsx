@@ -47,11 +47,11 @@ export function ResolveView({ order }: { order: string }) {
     return (
       <div>
         <h1 className="text-2xl font-semibold text-zinc-100">
-          No pudimos encontrar tu compra
+          We couldn&apos;t find your purchase
         </h1>
         <p className="mt-3 text-zinc-400">
-          Si acabás de pagar, puede tardar unos segundos. Volvé a intentar, o
-          entrá a tu dashboard desde el link que te enviamos por email.
+          If you just paid, it can take a few seconds. Try again, or open your
+          dashboard from the link we emailed you.
         </p>
         <button
           onClick={() => {
@@ -60,7 +60,7 @@ export function ResolveView({ order }: { order: string }) {
           }}
           className="mt-6 rounded-lg bg-zinc-100 px-5 py-3 font-medium text-zinc-900 hover:bg-white"
         >
-          Reintentar
+          Try again
         </button>
       </div>
     );
@@ -69,7 +69,7 @@ export function ResolveView({ order }: { order: string }) {
   return (
     <div className="flex items-center gap-3 text-zinc-300">
       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
-      Confirmando tu pago y preparando tu fix pack…
+      Confirming your payment and preparing your fix pack…
     </div>
   );
 }

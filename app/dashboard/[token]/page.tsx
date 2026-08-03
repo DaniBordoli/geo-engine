@@ -39,11 +39,11 @@ function Delta({ points }: { points: ScanPoint[] }) {
   const vals = points.map((p) => p.shareOfVoice).filter((v): v is number => v !== null);
   if (vals.length < 2) return null;
   const d = vals[vals.length - 1] - vals[vals.length - 2];
-  if (Math.abs(d) < 0.005) return <span className="text-sm text-zinc-500">sin cambios</span>;
+  if (Math.abs(d) < 0.005) return <span className="text-sm text-zinc-500">no change</span>;
   const up = d > 0;
   return (
     <span className={`text-sm ${up ? "text-emerald-400" : "text-red-400"}`}>
-      {up ? "▲" : "▼"} {Math.abs(Math.round(d * 100))}pts vs. scan previo
+      {up ? "▲" : "▼"} {Math.abs(Math.round(d * 100))}pts vs. previous scan
     </span>
   );
 }
@@ -59,11 +59,11 @@ export default async function DashboardPage({
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
-      <h1 className="text-2xl font-semibold text-zinc-100">Tu dashboard</h1>
+      <h1 className="text-2xl font-semibold text-zinc-100">Your dashboard</h1>
       <p className="mt-1 text-sm text-zinc-500">{data.email}</p>
 
       {data.domains.length === 0 && (
-        <p className="mt-10 text-zinc-500">Todavía no hay scans.</p>
+        <p className="mt-10 text-zinc-500">No scans yet.</p>
       )}
 
       <div className="mt-10 space-y-8">
@@ -82,7 +82,7 @@ export default async function DashboardPage({
                     href={`/fixpack/${latest.id}`}
                     className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300 hover:border-emerald-400/60"
                   >
-                    ver fix pack →
+                    view fix pack →
                   </a>
                 )}
                 <div className="ml-auto">
@@ -106,9 +106,9 @@ export default async function DashboardPage({
               <table className="mt-6 w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-zinc-600">
-                    <th className="py-1 font-normal">Fecha</th>
+                    <th className="py-1 font-normal">Date</th>
                     <th className="py-1 font-normal">Share of voice</th>
-                    <th className="py-1 font-normal">Citación</th>
+                    <th className="py-1 font-normal">Citation</th>
                     <th className="py-1 font-normal">Invisible</th>
                   </tr>
                 </thead>

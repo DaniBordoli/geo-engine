@@ -36,12 +36,12 @@ export async function generateContent(
         "1. NEVER invent product names, prices, specs, dates, or claims. Use ONLY " +
         "facts present in the provided 'Site content'.\n" +
         "2. For anything real but not in the site content, write a clear " +
-        "placeholder in [brackets] for the customer to fill: [precio], [modelo], " +
+        "placeholder in [brackets] for the customer to fill: [price], [model], " +
         "[spec], [URL].\n" +
         "3. Ground it against the REAL competitors and sources currently winning " +
         "this query (given below) — reference them by name; they are real.\n" +
-        "4. Start the body with one line: '> Completá los [corchetes] con tus " +
-        "datos reales antes de publicar.'\n" +
+        "4. Start the body with one line: '> Fill in the [brackets] with your real " +
+        "details before publishing.'\n" +
         `Prefer these formats: ${vertical.contentTemplates.join(", ")}.`,
       messages: [
         {
@@ -53,7 +53,7 @@ export async function generateContent(
             `Real competitors winning this query: ${gap.competitors.join(", ") || "unknown"}\n` +
             `Sources currently cited for this query: ${gap.winningUrls.join(", ") || "none"}\n\n` +
             `Site content (real, from ${brand}'s homepage — use these facts, do not invent):\n"""` +
-            (siteText || "(no se pudo obtener — usá [placeholders] para todo dato de producto)") +
+            (siteText || "(couldn't fetch — use [placeholders] for every product detail)") +
             `"""\n\n` +
             "Write a title and a Markdown body for a page/section that would make " +
             "the brand citable for this prompt, following the HARD RULES.",

@@ -23,7 +23,7 @@ export function ReScanButton({ token, domain }: { token: string; domain: string 
         disabled={pending}
         className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-zinc-300 hover:border-white/30 disabled:opacity-60"
       >
-        {pending ? "Re-escaneando…" : "Re-escanear"}
+        {pending ? "Re-scanning…" : "Re-scan"}
       </button>
       {error && <span className="text-sm text-red-400">{error}</span>}
     </div>

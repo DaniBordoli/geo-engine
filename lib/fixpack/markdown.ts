@@ -1,9 +1,9 @@
 import type { FixItem, FixPack } from "./types";
 
 const LABEL: Record<FixItem["category"], string> = {
-  "citable-content": "Contenido citable",
+  "citable-content": "Citable content",
   "schema-markup": "Schema markup",
-  "off-site-action": "Acciones off-site",
+  "off-site-action": "Off-site actions",
 };
 
 // Export del fix pack a Markdown (entregable / listo para PR).
@@ -11,18 +11,18 @@ export function fixPackToMarkdown(pack: FixPack, domain: string): string {
   const lines: string[] = [
     `# Fix pack — ${domain}`,
     ``,
-    `Generado: ${pack.generatedAt} · ${pack.items.length} acciones priorizadas.`,
+    `Generated: ${pack.generatedAt} · ${pack.items.length} prioritized actions.`,
     ``,
   ];
   pack.items.forEach((item, i) => {
     lines.push(
       `## ${i + 1}. ${item.title}`,
       ``,
-      `**Tipo:** ${LABEL[item.category]} · **Prioridad:** ${item.priority}`,
+      `**Type:** ${LABEL[item.category]} · **Priority:** ${item.priority}`,
       ``,
       `**Gap:** ${item.gap}`,
       ``,
-      `**Causa:** ${item.cause}`,
+      `**Cause:** ${item.cause}`,
       ``,
       item.body,
       ``,
