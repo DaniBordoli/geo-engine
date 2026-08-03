@@ -12,6 +12,12 @@ export type VerticalConfig = {
   icp: string;
   /** Plantillas: "mejor {X} para {caso}", "{marca} vs {competidor}". */
   promptArchetypes: string[];
+  /**
+   * Set fijo de prompts de categoría (brand-agnósticos). Si está presente, el
+   * generador los usa verbatim para TODAS las marcas → share-of-voice comparable
+   * head-to-head (necesario para un leaderboard honesto). Si no, se generan por marca.
+   */
+  fixedPrompts?: string[];
   /** Formatos del fix pack por vertical. */
   contentTemplates: string[];
   /** Canal (Shopify App Store, comunidad LatAm, Semrush App Center). */

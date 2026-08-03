@@ -77,5 +77,15 @@ function mockGenerator(): PromptGenerator {
 }
 
 export function getPromptGenerator(): PromptGenerator {
-  return process.env.ANTHROPIC_API_KEY ? realGenerator() : mockGenerator();
+  const base = process.env.ANTHROPIC_API_KEY ? realGenerator() : mockGenerator();
+  return {
+    async generate(config: VerticalConfig, brand: string): Promise<GeneratedPrompt[]> {
+      // Set fijo → mismos prompts para toda marca (head-to-head comparable),
+      // sin llamada al LLM. Brand-agnóstico a propósito.
+      if (config.fixedPrompts?.length) {
+        return config.fixedPrompts.map((text) => ({ text, archetype: "fixed" }));
+      }
+      return base.generate(config, brand);
+    },
+  };
 }

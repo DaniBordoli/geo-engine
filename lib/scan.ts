@@ -25,6 +25,8 @@ export type ScanInput = {
   domain: string;
   email?: string;
   verticalId?: string;
+  /** Override del nombre de marca cuando difiere del dominio (ej: hellobubble.com → "Bubble"). */
+  brand?: string;
   attribution?: Attribution;
 };
 
@@ -63,7 +65,9 @@ export function brandFromDomain(domain: string): string {
 }
 
 export async function runScan(input: ScanInput): Promise<ScanReport> {
-  const brand = brandFromDomain(input.domain);
+  // Override explícito (marca ≠ dominio) o token derivado del dominio. Nota: la
+  // citación (hostMatchesBrand) usa este mismo valor, correcto para el caso normal.
+  const brand = input.brand?.trim() || brandFromDomain(input.domain);
   const vertical = (input.verticalId && getVertical(input.verticalId)) || ecommerce;
 
   const generator = getPromptGenerator();
