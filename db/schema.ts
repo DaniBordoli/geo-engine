@@ -125,6 +125,19 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Cache de prompts por dominio (multinicho): la primera vez que se escanea un
+// dominio dinámico, se detectan rubro+idioma y se generan los prompts; se guardan
+// acá para que los RE-SCANS reusen EXACTAMENTE las mismas preguntas → la tendencia
+// del dashboard compara peras con peras. Key = host normalizado.
+export const domainPrompts = pgTable("domain_prompts", {
+  domainKey: text("domain_key").primaryKey(),
+  category: text("category").notNull(),
+  lang: text("lang").notNull(),
+  /** string[] con los prompts de compra (brand-agnósticos, en `lang`). */
+  prompts: jsonb("prompts").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Tipos inferidos para uso en la app.
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

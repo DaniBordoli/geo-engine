@@ -24,7 +24,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is the result accurate?",
-    a: "It's a real, representative snapshot — not a universal guarantee. AI answers vary and shift over time, so treat it as a directional read of where you stand today, and re-run it to see how you're moving. More signal than any dashboard that just guesses.",
+    a: "It's a real, representative snapshot — not a universal guarantee. AI answers shift over time, so we re-run the same set of category questions on each scan and chart your share-of-voice, letting you track whether you're gaining or losing ground. More signal than any dashboard that just guesses.",
   },
   {
     q: "What do I get if I pay (the fix pack)?",
