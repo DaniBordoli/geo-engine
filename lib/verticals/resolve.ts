@@ -13,6 +13,15 @@ export type ResolveOpts = {
   category?: string;
 };
 
+// Key del cache de prompts. Sin override → el host normalizado (set canónico del
+// dominio). Con override → host + lang + category, para que overrides distintos
+// tengan sets estables propios sin corromper el canónico.
+function cacheKeyFor(domain: string, opts?: ResolveOpts): string {
+  const base = domainKey(domain);
+  if (!opts?.lang && !opts?.category) return base;
+  return `${base}|${opts?.lang ?? ""}|${(opts?.category ?? "").trim().toLowerCase()}`;
+}
+
 // Config dinámico: los prompts van como `fixedPrompts` → el generador los usa
 // verbatim (una llamada, sin brand-tailoring) y el SoV es comparable.
 function dynamicConfig(category: string, lang: string, prompts: string[]): VerticalConfig {
@@ -30,8 +39,8 @@ function dynamicConfig(category: string, lang: string, prompts: string[]): Verti
 
 // Decide el config del vertical para un scan:
 //  - verticalId conocido → config ESTÁTICO (modo teardown, sin tocar).
-//  - dominio ya cacheado (sin override) → REUSA las mismas preguntas (trend real),
-//    sin crawl ni detección.
+//  - dominio ya cacheado (por dominio, u override) → REUSA las mismas preguntas
+//    (trend real), sin crawl ni detección.
 //  - si no → DINÁMICO: crawlea, detecta rubro+idioma, genera prompts y los cachea.
 export async function resolveVertical(
   domain: string,
@@ -46,14 +55,14 @@ export async function resolveVertical(
   // igual que el resto del pipeline sin keys.
   if (!process.env.ANTHROPIC_API_KEY) return ecommerce;
 
-  const key = domainKey(domain);
-  const hasOverride = Boolean(opts?.lang || opts?.category);
+  // Key del cache: el host para el default; el host + el override cuando hay uno,
+  // así un usuario que siempre fuerza el mismo lang/category también reusa su set
+  // estable (trend real para él) SIN pisar el set canónico del default.
+  const key = cacheKeyFor(domain, opts);
 
-  // Reuso: mismo dominio, sin override → mismas preguntas que la primera vez.
-  if (!hasOverride) {
-    const cached = await getCachedVertical(key);
-    if (cached) return dynamicConfig(cached.category, cached.lang, cached.prompts);
-  }
+  // Reuso: mismo dominio (y mismo override, si hay) → mismas preguntas que la 1ra vez.
+  const cached = await getCachedVertical(key);
+  if (cached) return dynamicConfig(cached.category, cached.lang, cached.prompts);
 
   const crawlData = await fetchSiteText(domain);
   const d = await detectVertical(crawlData, domain, {
@@ -62,11 +71,11 @@ export async function resolveVertical(
   });
   const lang = d.lang || "en";
 
-  // Cachea SOLO la detección canónica (sin override) y SOLO si el crawl trajo
-  // contenido real: un shell vacío da detección poco fiable, y como el cache es
-  // write-once no querés fijar basura permanente — dejá que un re-scan reintente.
+  // Cachea SOLO si el crawl trajo contenido real: un shell vacío da detección poco
+  // fiable, y como el cache es write-once no querés fijar basura permanente — dejá
+  // que un re-scan reintente.
   const MIN_CRAWL = 300; // mismo umbral "thin" que crawl.ts
-  if (!hasOverride && d.prompts.length && crawlData.length >= MIN_CRAWL) {
+  if (d.prompts.length && crawlData.length >= MIN_CRAWL) {
     await cacheVertical(key, { category: d.category, lang, prompts: d.prompts });
   }
 
