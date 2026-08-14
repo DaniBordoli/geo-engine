@@ -71,11 +71,11 @@ export async function resolveVertical(
   });
   const lang = d.lang || "en";
 
-  // Cachea SOLO si el crawl trajo contenido real: un shell vacío da detección poco
-  // fiable, y como el cache es write-once no querés fijar basura permanente — dejá
-  // que un re-scan reintente.
-  const MIN_CRAWL = 300; // mismo umbral "thin" que crawl.ts
-  if (d.prompts.length && crawlData.length >= MIN_CRAWL) {
+  // Cachea si hubo detección y el crawl no falló del todo. Guard mínimo a propósito:
+  // un umbral alto bloqueaba sitios reales con shell liviano (DTC moderno) — que
+  // igual detectan bien — dejándolos sin trend. Solo saltamos el fallo total de
+  // crawl ("" → detección sobre cero data, no confiable → que reintente el re-scan).
+  if (d.prompts.length && crawlData.length > 0) {
     await cacheVertical(key, { category: d.category, lang, prompts: d.prompts });
   }
 
