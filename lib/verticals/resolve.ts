@@ -62,8 +62,11 @@ export async function resolveVertical(
   });
   const lang = d.lang || "en";
 
-  // Cachea SOLO la detección canónica (sin override) → fija el set del dominio.
-  if (!hasOverride && d.prompts.length) {
+  // Cachea SOLO la detección canónica (sin override) y SOLO si el crawl trajo
+  // contenido real: un shell vacío da detección poco fiable, y como el cache es
+  // write-once no querés fijar basura permanente — dejá que un re-scan reintente.
+  const MIN_CRAWL = 300; // mismo umbral "thin" que crawl.ts
+  if (!hasOverride && d.prompts.length && crawlData.length >= MIN_CRAWL) {
     await cacheVertical(key, { category: d.category, lang, prompts: d.prompts });
   }
 

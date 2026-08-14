@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { scans, users } from "@/db/schema";
+import { domainKey } from "@/lib/verticals/domain-prompts";
 
 // Historial por dominio de un usuario (identificado por token opaco), para el
 // dashboard: tendencia de share-of-voice y citación a lo largo de los re-scans.
@@ -45,9 +46,12 @@ export async function getDashboard(token: string): Promise<Dashboard | null> {
       invisibleRate: s.invisibleRate,
       paid: s.paid,
     };
-    const list = byDomain.get(s.domain);
+    // Agrupa por host normalizado (mismo key que el cache de prompts) → los
+    // re-scans del mismo sitio con formato distinto no parten la tendencia.
+    const dk = domainKey(s.domain);
+    const list = byDomain.get(dk);
     if (list) list.push(point);
-    else byDomain.set(s.domain, [point]);
+    else byDomain.set(dk, [point]);
   }
 
   return {

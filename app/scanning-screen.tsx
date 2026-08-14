@@ -41,8 +41,8 @@ export function ScanningScreen({ domain }: { domain: string }) {
   }
 
   const current = DEMO_PROMPTS[i % DEMO_PROMPTS.length];
-  // Las "ya respondidas": las 3 anteriores en el ciclo.
-  const done = [1, 2, 3].map((k) => DEMO_PROMPTS[(i - k + DEMO_PROMPTS.length * 4) % DEMO_PROMPTS.length]);
+  // Las "ya respondidas": hasta 3 que realmente aparecieron antes (ninguna en i=0).
+  const done = Array.from({ length: Math.min(i, 3) }, (_, k) => DEMO_PROMPTS[(i - 1 - k) % DEMO_PROMPTS.length]);
 
   return (
     <div className="animate-fade-in w-full max-w-lg text-center">
